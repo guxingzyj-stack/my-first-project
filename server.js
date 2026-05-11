@@ -234,7 +234,7 @@ async function searchQdrant(embedding, topK) {
           category: "知识库（语义搜索）",
           source: point.payload?.source || "未知",
           score: point.score,
-          preview: point.payload?.content?.substring(0, 500) || ""
+          preview: point.payload?.content || ""
         });
       }
     } else {
