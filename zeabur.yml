@@ -1,0 +1,50 @@
+# Zeabur 部署配置
+# 文档: https://zeabur.com/docs
+
+# 服务信息
+service:
+  name: gaokao-consultation
+  region: auto
+
+# 环境变量配置
+env:
+  # SiliconCloud API 配置
+  - key: SILICONCLOUD_API_KEY
+    value: ""  # 必填，请在 Zeabur 后台填写
+    type: USER_INPUT
+    required: true
+  
+  # LLM 模型配置
+  - key: LLM_MODEL
+    value: "deepseek-ai/DeepSeek-V2.5"
+    type: PLAIN
+  
+  # Embedding 模型配置
+  - key: EMBEDDING_MODEL
+    value: "BAAI/bge-m3"
+    type: PLAIN
+  
+  # SiliconCloud API 地址
+  - key: SILICONCLOUD_BASE_URL
+    value: "https://api.siliconflow.cn/v1"
+    type: PLAIN
+  
+  # Qdrant Cloud 配置（可选，如使用本地Qdrant则留空）
+  - key: QDRANT_URL
+    value: ""  # 如 https://xxx.qdrant.tech
+    type: USER_INPUT
+    required: false
+  
+  - key: QDRANT_API_KEY
+    value: ""
+    type: USER_INPUT
+    required: false
+  
+  # 如果不使用Qdrant Cloud，设置此端口用于本地Qdrant
+  - key: QDRANT_PORT
+    value: "6333"
+    type: PLAIN
+
+# 构建配置
+build:
+  dockerfile: Dockerfile
