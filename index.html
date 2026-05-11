@@ -6,155 +6,417 @@
   <title>高考志愿咨询系统</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
       min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: center;
       padding: 20px;
     }
-    .container {
-      background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    
+    .app-container {
       width: 100%;
-      max-width: 800px;
+      max-width: 900px;
+    }
+    
+    /* 顶部 Logo 区域 */
+    .header {
+      background: white;
+      border-radius: 24px 24px 0 0;
+      padding: 30px 40px 20px;
+      text-align: center;
+      box-shadow: 0 -5px 30px rgba(0,0,0,0.1);
+    }
+    
+    .logo-area {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 30px;
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .header h1 {
+      font-size: 26px;
+      color: #333;
+      font-weight: 600;
+    }
+    
+    .header p {
+      color: #888;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+    
+    /* 功能卡片区 */
+    .features {
+      background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%);
+      padding: 25px 40px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 16px;
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(102, 126, 234, 0.2);
+      border-color: #667eea;
+    }
+    
+    .feature-card .icon {
+      font-size: 24px;
+    }
+    
+    .feature-card .text {
+      font-size: 14px;
+      color: #555;
+      font-weight: 500;
+    }
+    
+    /* 主内容区 */
+    .main-content {
+      background: white;
+      margin: 0 20px;
+      border-radius: 20px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
       overflow: hidden;
     }
-    .header {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 30px;
-      text-align: center;
+    
+    /* 状态栏 */
+    .status-bar {
+      padding: 12px 25px;
+      background: #f8f9ff;
+      font-size: 13px;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-bottom: 1px solid #eee;
     }
-    .header h1 { font-size: 28px; margin-bottom: 10px; }
-    .header p { opacity: 0.9; font-size: 14px; }
+    
+    .status-bar .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ddd;
+    }
+    
+    .status-bar.connected .dot {
+      background: #4ade80;
+      box-shadow: 0 0 8px rgba(74, 222, 128, 0.5);
+    }
+    
+    .status-bar.error .dot {
+      background: #f87171;
+    }
+    
+    /* 聊天区域 */
     .chat-area {
       height: 400px;
       overflow-y: auto;
-      padding: 20px;
-      background: #f5f5f5;
+      padding: 25px;
+      background: #fafbfc;
     }
+    
+    .chat-area::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .chat-area::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 3px;
+    }
+    
+    /* 欢迎消息 */
+    .welcome-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 20px;
+      padding: 30px;
+      text-align: center;
+      color: white;
+      margin-bottom: 20px;
+    }
+    
+    .welcome-box h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+    
+    .welcome-box p {
+      opacity: 0.9;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    
+    .welcome-box .suggestions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .welcome-box .suggestion-btn {
+      background: rgba(255,255,255,0.2);
+      border: 1px solid rgba(255,255,255,0.3);
+      color: white;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .welcome-box .suggestion-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
+    
+    /* 消息气泡 */
     .message {
       margin-bottom: 20px;
       animation: fadeIn 0.3s ease;
     }
+    
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    .message.user { text-align: right; }
+    
+    .message.user {
+      text-align: right;
+    }
+    
     .message .bubble {
       display: inline-block;
-      padding: 12px 18px;
+      padding: 14px 20px;
       border-radius: 18px;
       max-width: 80%;
-      line-height: 1.6;
+      line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
+      text-align: left;
     }
+    
     .message.user .bubble {
-      background: #667eea;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
-      border-bottom-right-radius: 4px;
+      border-bottom-right-radius: 6px;
     }
+    
     .message.bot .bubble {
       background: white;
       color: #333;
-      border-bottom-left-radius: 4px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-bottom-left-radius: 6px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
     }
-    .message.bot .source {
+    
+    .message .source {
       font-size: 12px;
-      color: #666;
+      color: #999;
       margin-top: 8px;
-      padding-left: 10px;
+      padding-left: 5px;
     }
+    
+    .message .source-item {
+      display: inline-block;
+      background: #f0f0f5;
+      padding: 4px 10px;
+      border-radius: 12px;
+      margin-right: 8px;
+      margin-bottom: 5px;
+    }
+    
+    /* 输入区域 */
     .input-area {
-      padding: 20px;
+      padding: 20px 25px;
       background: white;
       border-top: 1px solid #eee;
       display: flex;
-      gap: 10px;
+      gap: 12px;
+      align-items: center;
     }
+    
     .input-area input {
       flex: 1;
-      padding: 15px 20px;
-      border: 2px solid #e0e0e0;
+      padding: 16px 22px;
+      border: 2px solid #e8e8e8;
       border-radius: 30px;
-      font-size: 16px;
+      font-size: 15px;
       outline: none;
-      transition: border-color 0.3s;
+      transition: all 0.3s;
     }
+    
     .input-area input:focus {
       border-color: #667eea;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
     }
+    
     .input-area button {
-      padding: 15px 30px;
+      width: 50px;
+      height: 50px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: white;
       border: none;
-      border-radius: 30px;
-      font-size: 16px;
+      border-radius: 50%;
+      font-size: 20px;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     }
+    
     .input-area button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     }
+    
     .input-area button:disabled {
-      opacity: 0.6;
+      opacity: 0.5;
       cursor: not-allowed;
       transform: none;
     }
-    .status {
-      padding: 10px 20px;
-      background: #fff3cd;
-      color: #856404;
+    
+    /* 底部信息 */
+    .footer {
+      background: white;
+      border-radius: 0 0 24px 24px;
+      padding: 15px;
+      text-align: center;
+      color: #999;
       font-size: 12px;
-      text-align: center;
+      box-shadow: 0 5px 30px rgba(0,0,0,0.1);
     }
-    .typing {
-      color: #666;
-      font-style: italic;
+    
+    /* 打字指示器 */
+    .typing-indicator {
+      display: flex;
+      gap: 5px;
+      padding: 5px 0;
     }
-    .welcome {
-      text-align: center;
-      padding: 60px 20px;
-      color: #666;
+    
+    .typing-indicator span {
+      width: 8px;
+      height: 8px;
+      background: #667eea;
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out;
     }
-    .welcome h2 { color: #333; margin-bottom: 20px; }
-    .welcome ul { list-style: none; text-align: left; max-width: 400px; margin: 0 auto; }
-    .welcome li { padding: 8px 0; }
-    .welcome li::before { content: "✅ "; }
+    
+    .typing-indicator span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-indicator span:nth-child(2) { animation-delay: -0.16s; }
+    
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+    
+    /* 响应式 */
+    @media (max-width: 600px) {
+      .features { padding: 15px; gap: 10px; }
+      .feature-card { padding: 12px 15px; }
+      .feature-card .text { font-size: 12px; }
+      .header { padding: 20px; }
+      .header h1 { font-size: 20px; }
+      .logo-icon { width: 50px; height: 50px; font-size: 24px; }
+      .chat-area { height: 350px; padding: 15px; }
+      .input-area { padding: 15px; }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="app-container">
+    <!-- 顶部 Header -->
     <div class="header">
-      <h1>🎓 高考志愿咨询系统</h1>
-      <p>基于 AI 的智能高考志愿填报分析助手</p>
+      <div class="logo-area">
+        <div class="logo-icon">🎓</div>
+        <h1>高考志愿咨询系统</h1>
+      </div>
+      <p>智能 AI 助手，为你规划最佳志愿方案</p>
     </div>
-    <div class="status" id="status">检查连接状态...</div>
-    <div class="chat-area" id="chatArea">
-      <div class="welcome">
-        <h2>👋 欢迎使用高考志愿咨询系统</h2>
-        <p>我可以帮你分析：</p>
-        <ul>
-          <li>院校选择与录取概率分析</li>
-          <li>专业发展前景与就业指导</li>
-          <li>志愿填报策略与技巧</li>
-          <li>各省份高考政策解读</li>
-        </ul>
-        <p style="margin-top: 20px; color: #999;">请在下方输入你的问题...</p>
+    
+    <!-- 功能卡片 -->
+    <div class="features">
+      <div class="feature-card" onclick="askFeature('选科分析')">
+        <span class="icon">📚</span>
+        <span class="text">选科分析</span>
+      </div>
+      <div class="feature-card" onclick="askFeature('分数定位')">
+        <span class="icon">📊</span>
+        <span class="text">分数定位</span>
+      </div>
+      <div class="feature-card" onclick="askFeature('院校推荐')">
+        <span class="icon">🏫</span>
+        <span class="text">院校推荐</span>
+      </div>
+      <div class="feature-card" onclick="askFeature('志愿填报')">
+        <span class="icon">✍️</span>
+        <span class="text">志愿填报</span>
+      </div>
+      <div class="feature-card" onclick="askFeature('政策解读')">
+        <span class="icon">📜</span>
+        <span class="text">政策解读</span>
       </div>
     </div>
-    <div class="input-area">
-      <input type="text" id="messageInput" placeholder="输入你的高考问题，如：理科580分能上什么大学？" />
-      <button id="sendBtn" onclick="sendMessage()">发送</button>
+    
+    <!-- 主内容区 -->
+    <div class="main-content">
+      <div class="status-bar" id="statusBar">
+        <span class="dot"></span>
+        <span id="statusText">检查系统状态...</span>
+      </div>
+      
+      <div class="chat-area" id="chatArea">
+        <div class="welcome-box">
+          <h2>👋 欢迎使用高考志愿咨询系统</h2>
+          <p>我是你的智能志愿规划助手，可以帮你分析院校、解读政策、<br>制定最适合你的志愿填报方案</p>
+          <div class="suggestions">
+            <button class="suggestion-btn" onclick="askSuggestion('理科 580 分能上哪些大学？')">理科 580 分能上哪些大学？</button>
+            <button class="suggestion-btn" onclick="askSuggestion('计算机专业就业前景如何？')">计算机专业就业前景如何？</button>
+            <button class="suggestion-btn" onclick="askSuggestion('2024 年高考政策有什么变化？')">2024 年高考政策有什么变化？</button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="input-area">
+        <input type="text" id="messageInput" placeholder="输入你的高考问题，如：理科580分能上什么大学？" />
+        <button id="sendBtn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+    
+    <!-- 底部 -->
+    <div class="footer">
+      © 2024 高考志愿咨询系统 · AI 智能助手
     </div>
   </div>
 
@@ -162,7 +424,8 @@
     const chatArea = document.getElementById('chatArea');
     const messageInput = document.getElementById('messageInput');
     const sendBtn = document.getElementById('sendBtn');
-    const statusEl = document.getElementById('status');
+    const statusBar = document.getElementById('statusBar');
+    const statusText = document.getElementById('statusText');
 
     // 检查配置
     async function checkConfig() {
@@ -170,17 +433,28 @@
         const res = await fetch('/api/config');
         const data = await res.json();
         if (data.hasApiKey) {
-          statusEl.style.background = '#d4edda';
-          statusEl.style.color = '#155724';
-          statusEl.textContent = `✅ 系统已就绪 | 模型: ${data.llmModel}`;
+          statusBar.classList.add('connected');
+          statusText.textContent = `✅ 系统就绪 | 模型: ${data.llmModel}`;
         } else {
-          statusEl.style.background = '#f8d7da';
-          statusEl.style.color = '#721c24';
-          statusEl.textContent = '❌ API Key 未配置，请在 Zeabur 环境变量中设置 SILICONCLOUD_API_KEY';
+          statusBar.classList.add('error');
+          statusText.textContent = '❌ API Key 未配置，请在 Zeabur 环境变量中设置 SILICONCLOUD_API_KEY';
         }
       } catch (e) {
-        statusEl.textContent = '⚠️ 无法连接服务器';
+        statusBar.classList.add('error');
+        statusText.textContent = '⚠️ 无法连接服务器，请检查部署状态';
       }
+    }
+
+    // 功能卡片点击
+    function askFeature(topic) {
+      messageInput.value = `我想了解${topic}，应该注意什么？`;
+      messageInput.focus();
+    }
+
+    // 快捷问题点击
+    function askSuggestion(question) {
+      messageInput.value = question;
+      sendMessage();
     }
 
     // 发送消息
@@ -188,14 +462,22 @@
       const message = messageInput.value.trim();
       if (!message) return;
 
+      // 移除欢迎框
+      const welcomeBox = chatArea.querySelector('.welcome-box');
+      if (welcomeBox) welcomeBox.remove();
+
       // 添加用户消息
       addMessage('user', message);
       messageInput.value = '';
       sendBtn.disabled = true;
 
       // 添加加载指示
-      const typingEl = addMessage('bot', '思考中...');
-      typingEl.classList.add('typing');
+      const typingEl = addMessage('bot', '');
+      typingEl.querySelector('.bubble').innerHTML = `
+        <div class="typing-indicator">
+          <span></span><span></span><span></span>
+        </div>
+      `;
 
       try {
         const res = await fetch('/api/chat', {
@@ -207,39 +489,37 @@
         const data = await res.json();
 
         // 移除加载指示
-        typingEl.remove();
-
         if (data.error) {
-          addMessage('bot', `错误: ${data.error}${data.hint ? '\n\n💡 ' + data.hint : ''}`);
+          typingEl.querySelector('.bubble').innerHTML = `<span style="color: #e74c3c;">❌ ${data.error}</span>`;
+          if (data.hint) {
+            typingEl.querySelector('.bubble').innerHTML += `<br><br><span style="color: #666;">💡 ${data.hint}</span>`;
+          }
         } else {
-          addMessage('bot', data.reply, data.sources);
+          typingEl.querySelector('.bubble').innerHTML = escapeHtml(data.reply).replace(/\n/g, '<br>');
+          if (data.sources && data.sources.length > 0) {
+            let sourceHtml = '<div class="source">📚 参考来源：';
+            data.sources.forEach(s => {
+              sourceHtml += `<span class="source-item">[${s.category}] ${s.source}</span>`;
+            });
+            sourceHtml += '</div>';
+            typingEl.innerHTML += sourceHtml;
+          }
         }
       } catch (e) {
-        typingEl.remove();
-        addMessage('bot', '网络错误，请检查服务器连接');
+        typingEl.querySelector('.bubble').innerHTML = '<span style="color: #e74c3c;">❌ 网络错误，请检查服务器连接</span>';
       }
 
       sendBtn.disabled = false;
       messageInput.focus();
     }
 
-    // 添加消息到聊天区域
-    function addMessage(role, content, sources = []) {
+    // 添加消息
+    function addMessage(role, content) {
       const div = document.createElement('div');
       div.className = `message ${role}`;
-      
-      let html = `<div class="bubble">${escapeHtml(content)}</div>`;
-      
-      if (role === 'bot' && sources && sources.length > 0) {
-        html += '<div class="source">参考来源: ';
-        html += sources.map(s => `[${s.category}] ${s.source}`).join(' | ');
-        html += '</div>';
-      }
-      
-      div.innerHTML = html;
+      div.innerHTML = `<div class="bubble">${escapeHtml(content)}</div>`;
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
-      
       return div;
     }
 
