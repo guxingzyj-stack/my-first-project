@@ -24,7 +24,7 @@ const QDRANT_API_KEY = process.env.QDRANT_API_KEY || "";
 
 // 知识库目录
 const ROOT = __dirname;
-const REPO_ROOT = path.resolve(ROOT, "..");
+const REPO_ROOT = ROOT;  // 知识库在当前目录
 const POLICY_DIR = path.join(REPO_ROOT, "01_政策规则");
 const MAJOR_DIR = path.join(REPO_ROOT, "04_专业库");
 const PROVINCE_DIR = path.join(REPO_ROOT, "02_省份数据");
