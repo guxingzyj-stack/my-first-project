@@ -111,8 +111,9 @@ async function getEmbedding(text) {
 }
 
 // 从知识库检索相关内容
-async function searchKnowledgeBase(query, topK = 5) {
+async function searchKnowledgeBase(query, topK = 8) {
   const results = [];
+  const MIN_SCORE = 0.6; // 最低相关度阈值
 
   // 1. 搜索政策规则
   results.push(...await searchMarkdownFiles(POLICY_DIR, query, "政策规则"));
@@ -127,15 +128,31 @@ async function searchKnowledgeBase(query, topK = 5) {
   if (QDRANT_URL) {
     try {
       const queryEmbedding = await getEmbedding(query);
-      const vectorResults = await searchQdrant(queryEmbedding, topK);
-      results.push(...vectorResults);
+      const vectorResults = await searchQdrant(queryEmbedding, topK * 2); // 多取一些，后续过滤
+      
+      // 过滤低分结果
+      const filteredResults = vectorResults.filter(r => r.score >= MIN_SCORE);
+      results.push(...filteredResults);
     } catch (e) {
       console.error("Qdrant 搜索失败:", e.message);
     }
   }
 
-  // 按相关度排序并返回 topK
-  return results.slice(0, topK);
+  // 按相关度排序
+  results.sort((a, b) => b.score - a.score);
+
+  // 去重（相同 source）
+  const uniqueResults = [];
+  const seenSources = new Set();
+  for (const r of results) {
+    if (!seenSources.has(r.source)) {
+      seenSources.add(r.source);
+      uniqueResults.push(r);
+    }
+  }
+
+  // 返回 topK
+  return uniqueResults.slice(0, topK);
 }
 
 // 关键词搜索 Markdown 文件

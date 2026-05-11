@@ -180,24 +180,55 @@ function getAllMarkdownFiles(dir) {
   return results;
 }
 
-// 读取文件内容并分块
-function readAndChunkFile(filePath, maxChunkSize = 1000) {
+// 读取文件内容并分块（优化版：语义分块 + 重叠）
+function readAndChunkFile(filePath, maxChunkSize = 600, overlap = 150) {
   const content = fs.readFileSync(filePath, "utf-8");
   const chunks = [];
   
-  // 按段落分块
-  const paragraphs = content.split(/\n\n+/);
-  let currentChunk = "";
+  // 策略1：按标题分块（Markdown 的 # ## ###）
+  const headingSplit = content.split(/\n(?=#{1,3}\s)/);
   
-  for (const para of paragraphs) {
-    if ((currentChunk + para).length > maxChunkSize) {
+  for (const section of headingSplit) {
+    // 如果段落太长，再按句子分块
+    if (section.length > maxChunkSize * 1.5) {
+      const sentences = section.split(/(?<=[。！？\.\!\?])\s+/);
+      let currentChunk = "";
+      
+      for (const sentence of sentences) {
+        if ((currentChunk + sentence).length > maxChunkSize) {
+          if (currentChunk) {
+            chunks.push(currentChunk.trim());
+            // 保留重叠部分
+            const overlapStart = Math.max(0, currentChunk.length - overlap);
+            currentChunk = currentChunk.substring(overlapStart) + sentence;
+          } else {
+            currentChunk = sentence;
+          }
+        } else {
+          currentChunk += (currentChunk ? " " : "") + sentence;
+        }
+      }
       if (currentChunk) chunks.push(currentChunk.trim());
-      currentChunk = para;
     } else {
-      currentChunk += "\n\n" + para;
+      chunks.push(section.trim());
     }
   }
-  if (currentChunk) chunks.push(currentChunk.trim());
+  
+  // 如果没有按标题分块（比如没有标题的文档），按段落分块
+  if (chunks.length === 0) {
+    const paragraphs = content.split(/\n\n+/);
+    let currentChunk = "";
+    
+    for (const para of paragraphs) {
+      if ((currentChunk + para).length > maxChunkSize) {
+        if (currentChunk) chunks.push(currentChunk.trim());
+        currentChunk = para;
+      } else {
+        currentChunk += "\n\n" + para;
+      }
+    }
+    if (currentChunk) chunks.push(currentChunk.trim());
+  }
   
   return chunks.map((chunk, idx) => ({
     filePath,
@@ -206,6 +237,7 @@ function readAndChunkFile(filePath, maxChunkSize = 1000) {
     metadata: {
       source: path.relative(REPO_ROOT, filePath),
       chunkIndex: idx,
+      length: chunk.length
     },
   }));
 }
