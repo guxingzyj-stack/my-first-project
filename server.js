@@ -3,9 +3,22 @@
  * 使用 SiliconCloud API 替代本地 LM Studio
  */
 
-const http = require("http");
+// 加载 .env 文件（本地开发时使用，不依赖 dotenv 包）
 const fs = require("fs");
 const path = require("path");
+const envPath = path.join(__dirname, ".env");
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, "utf-8");
+  for (const line of envContent.split("\n")) {
+    const match = line.match(/^([^#=]+)=(.*)$/);
+    if (match) {
+      process.env[match[1].trim()] = match[2].trim();
+    }
+  }
+  console.log("✅ 已加载 .env 文件");
+}
+
+const http = require("http");
 const { URL } = require("url");
 
 // ==================== 配置 ====================
@@ -167,13 +180,29 @@ async function searchMarkdownFiles(dir, query, category) {
 async function searchQdrant(embedding, topK) {
   const results = [];
 
+  if (!QDRANT_URL || !QDRANT_API_KEY) {
+    return results;
+  }
+
   try {
-    const response = await fetch(`${QDRANT_URL}/collections/knowledge/points/search`, {
+    // 构造 Qdrant 搜索 URL
+    const searchUrl = `${QDRANT_URL}/collections/gaokao_knowledge/points/search`;
+
+    // 判断 API Key 类型：如果以 "eyJ" 开头，可能是 JWT Bearer Token
+    const isJWT = QDRANT_API_KEY.startsWith("eyJ");
+    const headers = {
+      "Content-Type": "application/json",
+    };
+
+    if (isJWT) {
+      headers["Authorization"] = `Bearer ${QDRANT_API_KEY}`;
+    } else {
+      headers["api-key"] = QDRANT_API_KEY;
+    }
+
+    const response = await fetch(searchUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${QDRANT_API_KEY}`
-      },
+      headers,
       body: JSON.stringify({
         vector: embedding,
         limit: topK,
@@ -185,12 +214,15 @@ async function searchQdrant(embedding, topK) {
       const data = await response.json();
       for (const point of data.result || []) {
         results.push({
-          category: "知识库",
+          category: "知识库（语义搜索）",
           source: point.payload?.source || "未知",
           score: point.score,
           preview: point.payload?.content?.substring(0, 500) || ""
         });
       }
+    } else {
+      const errorText = await response.text();
+      console.error("Qdrant 搜索失败:", response.status, errorText);
     }
   } catch (e) {
     console.error("Qdrant 搜索失败:", e.message);
