@@ -6,7 +6,7 @@
   <title>高考志愿咨询</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    
+
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
       background: linear-gradient(180deg, #e8f4f8 0%, #f0e6ff 50%, #e6f0ff 100%);
@@ -14,7 +14,7 @@
       display: flex;
       flex-direction: column;
     }
-    
+
     /* 顶部导航 */
     .header {
       padding: 24px 20px 20px;
@@ -22,261 +22,228 @@
       align-items: center;
       justify-content: space-between;
     }
-    
     .header-center {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 10px;
     }
-    
     .header-icon {
-      width: 80px;
-      height: 80px;
+      width: 80px; height: 80px;
       background: #7c3aed;
       border-radius: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      display: flex; align-items: center; justify-content: center;
       font-size: 44px;
-      box-shadow: 0 6px 20px rgba(124, 58, 237, 0.35);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
     }
-    
-    .header-title {
-      font-size: 28px;
-      color: #7c3aed;
-      font-weight: 700;
-    }
-    
-    .menu-btn {
-      font-size: 24px;
-      color: #666;
-      cursor: pointer;
-      padding: 8px;
-    }
-    
+    .header-title { font-size: 28px; color: #7c3aed; font-weight: 700; }
+    .menu-btn { font-size: 24px; color: #666; cursor: pointer; padding: 8px; }
+
     /* 主内容 */
-    .main-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 0 20px 20px;
-    }
-    
+    .main-content { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
+
     /* 欢迎文字 */
-    .welcome-text {
-      font-size: 20px;
-      color: #333;
-      font-weight: 600;
-      margin-bottom: 24px;
-      line-height: 1.5;
-    }
-    
-    /* 功能卡片列表 - 田字格布局 */
-    .feature-list {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 16px;
-    }
-    
-    .feature-card {
+    .welcome-text { font-size: 20px; color: #333; font-weight: 600; margin-bottom: 16px; line-height: 1.5; }
+
+    /* 考生信息面板 */
+    .profile-panel {
       background: #fff;
       border-radius: 12px;
-      padding: 14px 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
+      margin-bottom: 16px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      overflow: hidden;
+    }
+    .profile-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; cursor: pointer; user-select: none;
+    }
+    .profile-header-left {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; color: #555; font-weight: 500;
+    }
+    .profile-header-badge {
+      background: #aaa; color: #fff;
+      font-size: 11px; padding: 2px 7px; border-radius: 10px;
+    }
+    .profile-arrow { font-size: 12px; color: #999; transition: transform 0.2s; }
+    .profile-arrow.open { transform: rotate(180deg); }
+    .profile-form { padding: 0 16px 14px; display: none; }
+    .profile-form.open { display: block; }
+    .profile-row { display: flex; gap: 10px; margin-bottom: 10px; }
+    .profile-row:last-child { margin-bottom: 0; }
+    .profile-select, .profile-input {
+      flex: 1; padding: 9px 12px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 14px; color: #333; background: #fafafa;
+      outline: none; transition: border-color 0.2s;
+    }
+    .profile-select:focus, .profile-input:focus { border-color: #7c3aed; background: #fff; }
+    .profile-hint { font-size: 12px; color: #aaa; margin-top: 8px; }
+
+    /* 功能卡片 */
+    .feature-list {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 10px; margin-bottom: 16px;
+    }
+    .feature-card {
+      background: #fff; border-radius: 12px; padding: 12px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
+      cursor: pointer; transition: all 0.2s ease;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
-    
-    .feature-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    .feature-card:active {
-      transform: scale(0.97);
-    }
-    
+    .feature-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .feature-card:active { transform: scale(0.97); }
     .feature-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
+      width: 38px; height: 38px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
     }
-    
-    .icon-blue { background: #e3f2fd; }
+    .icon-blue   { background: #e3f2fd; }
     .icon-purple { background: #f3e5f5; }
     .icon-yellow { background: #fff8e1; }
-    .icon-green { background: #e8f5e9; }
-    
-    .feature-text {
-      font-size: 13px;
-      color: #333;
-      font-weight: 500;
-      text-align: center;
-    }
-    
+    .icon-green  { background: #e8f5e9; }
+    .feature-text { font-size: 12px; color: #333; font-weight: 500; text-align: center; line-height: 1.4; }
+
     /* 聊天区域 */
     .chat-area {
       background: rgba(255,255,255,0.8);
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 20px;
-      min-height: 200px;
-      max-height: 400px;
-      overflow-y: auto;
-      backdrop-filter: blur(10px);
-    }
-    
-    .message {
+      border-radius: 16px; padding: 16px;
       margin-bottom: 12px;
-      animation: fadeIn 0.2s ease;
+      min-height: 200px; max-height: 440px;
+      overflow-y: auto; backdrop-filter: blur(10px);
     }
-    
+    .message { margin-bottom: 14px; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(5px); }
-      to { opacity: 1; transform: translateY(0); }
+      to   { opacity: 1; transform: translateY(0); }
     }
-    
     .message.user { text-align: right; }
-    
     .message .bubble {
-      display: inline-block;
-      padding: 10px 14px;
-      border-radius: 16px;
-      max-width: 85%;
-      line-height: 1.5;
-      font-size: 14px;
-      word-break: break-word;
+      display: inline-block; padding: 10px 14px; border-radius: 16px;
+      max-width: 88%; line-height: 1.7; font-size: 14px;
+      word-break: break-word; text-align: left;
     }
-    
     .message.user .bubble {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-      border-bottom-right-radius: 4px;
+      color: #fff; border-bottom-right-radius: 4px;
+      white-space: pre-wrap;
     }
-    
     .message.bot .bubble {
-      background: #fff;
-      color: #333;
+      background: #fff; color: #333;
       border-bottom-left-radius: 4px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
-    
+
+    /* Markdown 渲染样式 */
+    .message.bot .bubble h3 {
+      font-size: 14px; font-weight: 700; margin: 10px 0 4px;
+      color: #7c3aed;
+    }
+    .message.bot .bubble h3:first-child { margin-top: 0; }
+    .message.bot .bubble strong { font-weight: 700; color: #333; }
+    .message.bot .bubble em { font-style: italic; color: #555; }
+    .message.bot .bubble p { margin-bottom: 8px; }
+    .message.bot .bubble p:last-child { margin-bottom: 0; }
+    .message.bot .bubble ul, .message.bot .bubble ol {
+      padding-left: 18px; margin: 6px 0;
+    }
+    .message.bot .bubble li { margin-bottom: 3px; }
+    .message.bot .bubble hr {
+      border: none; border-top: 1px solid #eee; margin: 10px 0;
+    }
+
+    /* 录取数据表格 */
+    .score-table {
+      width: 100%; border-collapse: collapse;
+      font-size: 12px; margin-top: 6px;
+    }
+    .score-table th {
+      background: #f0ebff; color: #7c3aed;
+      padding: 5px 8px; text-align: left;
+      font-weight: 600; border-bottom: 2px solid #e0d4ff;
+    }
+    .score-table td {
+      padding: 5px 8px; border-bottom: 1px solid #f0f0f0;
+      color: #444;
+    }
+    .score-table tr:last-child td { border-bottom: none; }
+    .score-table tr:hover td { background: #faf8ff; }
+    .score-count { font-size: 12px; color: #888; margin-bottom: 4px; }
+
+    /* 来源折叠块 */
+    .sources-block { margin-top: 8px; font-size: 12px; }
+    .sources-toggle {
+      color: #7c3aed; cursor: pointer; user-select: none;
+      display: inline-flex; align-items: center; gap: 4px;
+    }
+    .sources-toggle:hover { text-decoration: underline; }
+    .sources-list {
+      display: none; margin-top: 6px; padding: 8px 10px;
+      background: #f5f0ff; border-radius: 8px;
+      color: #666; line-height: 1.8;
+    }
+    .sources-list.open { display: block; }
+
+    /* 清空按钮 */
+    .clear-btn {
+      font-size: 12px; color: #aaa; cursor: pointer;
+      text-align: right; padding: 0 4px 8px;
+      user-select: none;
+    }
+    .clear-btn:hover { color: #e74c3c; }
+
     /* 打字指示器 */
-    .typing-indicator {
-      display: flex;
-      gap: 4px;
-      padding: 8px 0;
-    }
-    
+    .typing-indicator { display: flex; gap: 4px; padding: 8px 0; }
     .typing-indicator span {
-      width: 7px;
-      height: 7px;
-      background: #999;
-      border-radius: 50%;
-      animation: bounce 1.2s infinite ease-in-out;
+      width: 7px; height: 7px; background: #999;
+      border-radius: 50%; animation: bounce 1.2s infinite ease-in-out;
     }
-    
     .typing-indicator span:nth-child(1) { animation-delay: -0.24s; }
     .typing-indicator span:nth-child(2) { animation-delay: -0.12s; }
-    
     @keyframes bounce {
       0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-      40% { transform: scale(1); opacity: 1; }
+      40%           { transform: scale(1);   opacity: 1; }
     }
-    
+
     /* 底部输入区 */
-    .input-area {
-      padding: 12px 20px 28px;
-    }
-    
+    .input-area { padding: 8px 20px 28px; }
     .input-box {
-      background: #fff;
-      border-radius: 24px;
-      padding: 8px 8px 8px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
+      background: #fff; border-radius: 20px;
+      padding: 10px 10px 10px 16px;
+      display: flex; align-items: flex-end; gap: 10px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    
-    .mic-btn {
-      width: 40px;
-      height: 40px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      font-size: 22px;
-      cursor: pointer;
-      flex-shrink: 0;
-      color: #666;
+    .input-box textarea {
+      flex: 1; padding: 4px 0;
+      border: none; font-size: 15px; outline: none;
+      background: transparent; resize: none;
+      line-height: 1.5; max-height: 120px; overflow-y: auto;
+      font-family: inherit;
     }
-    
-    .input-box input {
-      flex: 1;
-      padding: 10px 0;
-      border: none;
-      font-size: 15px;
-      outline: none;
-      background: transparent;
-    }
-    
-    .input-box input::placeholder {
-      color: #999;
-    }
-    
+    .input-box textarea::placeholder { color: #999; }
     .send-btn {
-      width: 44px;
-      height: 44px;
+      width: 40px; height: 40px;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-      border: none;
-      border-radius: 12px;
-      font-size: 18px;
-      cursor: pointer;
-      flex-shrink: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      color: #fff; border: none; border-radius: 10px;
+      font-size: 17px; cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+      transition: opacity 0.2s;
     }
-    
-    .send-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
+    .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
     /* 状态栏 */
     .status-bar {
-      background: rgba(255,243,205,0.9);
-      color: #856404;
-      padding: 6px 20px;
-      font-size: 12px;
-      text-align: center;
-      backdrop-filter: blur(10px);
+      padding: 5px 20px; font-size: 12px;
+      text-align: center; backdrop-filter: blur(10px);
+      background: rgba(255,243,205,0.9); color: #856404;
     }
-    
-    .status-bar.ready {
-      background: rgba(212,237,218,0.9);
-      color: #155724;
-    }
-    
-    .status-bar.error {
-      background: rgba(248,215,218,0.9);
-      color: #721c24;
-    }
+    .status-bar.ready { background: rgba(212,237,218,0.9); color: #155724; }
+    .status-bar.error { background: rgba(248,215,218,0.9); color: #721c24; }
   </style>
 </head>
 <body>
+
   <!-- 顶部导航 -->
   <div class="header">
     <div style="width: 40px;"></div>
@@ -286,165 +253,413 @@
     </div>
     <div class="menu-btn">☰</div>
   </div>
-  
+
   <!-- 状态栏 -->
   <div class="status-bar" id="statusBar">检查系统状态...</div>
-  
+
   <!-- 主内容 -->
   <div class="main-content">
+
     <!-- 欢迎文字 -->
-    <div class="welcome-text">
-      欢迎使用 AI 高考志愿填报智能分析助手！
+    <div class="welcome-text">欢迎使用 AI 高考志愿填报智能分析助手！</div>
+
+    <!-- 考生信息面板 -->
+    <div class="profile-panel">
+      <div class="profile-header" onclick="toggleProfile()">
+        <div class="profile-header-left">
+          📋 我的信息
+          <span class="profile-header-badge" id="profileBadge">未填写</span>
+        </div>
+        <span class="profile-arrow" id="profileArrow">▼</span>
+      </div>
+      <div class="profile-form" id="profileForm">
+        <div class="profile-row">
+          <select class="profile-select" id="provinceSelect" onchange="updateProfileBadge()">
+            <option value="">选择省份</option>
+            <option>北京</option><option>天津</option><option>上海</option><option>重庆</option>
+            <option>河北</option><option>山西</option><option>辽宁</option><option>吉林</option>
+            <option>黑龙江</option><option>江苏</option><option>浙江</option><option>安徽</option>
+            <option>福建</option><option>江西</option><option>山东</option><option>河南</option>
+            <option>湖北</option><option>湖南</option><option>广东</option><option>海南</option>
+            <option>四川</option><option>贵州</option><option>云南</option><option>陕西</option>
+            <option>甘肃</option><option>青海</option><option>内蒙古</option><option>广西</option>
+            <option>西藏</option><option>宁夏</option><option>新疆</option>
+          </select>
+          <select class="profile-select" id="subjectSelect" onchange="updateProfileBadge()">
+            <option value="">选择科目</option>
+            <option>理科</option><option>文科</option>
+            <option>物理类</option><option>历史类</option>
+          </select>
+        </div>
+        <div class="profile-row">
+          <input class="profile-input" type="number" id="scoreInput"
+            placeholder="高考分数（如 580）" min="0" max="750"
+            oninput="updateProfileBadge()">
+        </div>
+        <div class="profile-hint">填写后 AI 会基于你的实际情况分析，无需每次重复说明</div>
+      </div>
     </div>
-    
-    <!-- 功能卡片列表 -->
+
+    <!-- 功能卡片 -->
     <div class="feature-list">
-      <div class="feature-card" onclick="askFeature('院校选择分析')">
+      <div class="feature-card" onclick="askFeature('我的分数能报哪些学校？冲稳保怎么定？')">
         <div class="feature-icon icon-blue">🏫</div>
-        <span class="feature-text">院校选择分析</span>
+        <span class="feature-text">我能上哪些学校？</span>
       </div>
-      <div class="feature-card" onclick="askFeature('专业发展指导')">
+      <div class="feature-card" onclick="askFeature('这个专业以后好就业吗？前景怎么样？')">
         <div class="feature-icon icon-purple">🧠</div>
-        <span class="feature-text">专业发展指导</span>
+        <span class="feature-text">这个专业好就业吗？</span>
       </div>
-      <div class="feature-card" onclick="askFeature('志愿填报技巧')">
+      <div class="feature-card" onclick="askFeature('平行志愿怎么填才稳？冲稳保比例怎么设？')">
         <div class="feature-icon icon-yellow">🚀</div>
-        <span class="feature-text">志愿填报技巧</span>
+        <span class="feature-text">志愿怎么填才稳？</span>
       </div>
-      <div class="feature-card" onclick="askFeature('各省份政策')">
+      <div class="feature-card" onclick="askFeature('我们省今年高考有哪些重要政策和注意事项？')">
         <div class="feature-icon icon-green">🗺️</div>
-        <span class="feature-text">各省份政策</span>
+        <span class="feature-text">我省有哪些政策？</span>
       </div>
     </div>
-    
+
     <!-- 聊天区域 -->
+    <div id="clearBtnArea"></div>
     <div class="chat-area" id="chatArea"></div>
   </div>
-  
+
   <!-- 底部输入 -->
   <div class="input-area">
     <div class="input-box">
-      <button class="mic-btn">🎤</button>
-      <input type="text" id="messageInput" placeholder="输入您的高考问题，如：'理科 580 分能上什么大学？'" />
+      <textarea id="messageInput" rows="1"
+        placeholder="输入问题，如：湖南理科 580 分，想学计算机，能上哪些学校？"></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
     </div>
   </div>
 
   <script>
-    const chatArea = document.getElementById('chatArea');
+    const chatArea     = document.getElementById('chatArea');
     const messageInput = document.getElementById('messageInput');
-    const sendBtn = document.getElementById('sendBtn');
-    const statusBar = document.getElementById('statusBar');
+    const sendBtn      = document.getElementById('sendBtn');
+    const statusBar    = document.getElementById('statusBar');
+    const clearBtnArea = document.getElementById('clearBtnArea');
 
-    async function checkConfig() {
-      try {
-        const res = await fetch('/api/config');
-        const data = await res.json();
-        if (data.hasApiKey) {
-          statusBar.className = 'status-bar ready';
-          statusBar.textContent = '✅ 系统已就绪';
-        } else {
-          statusBar.className = 'status-bar error';
-          statusBar.textContent = '❌ 请配置 API Key';
-        }
-      } catch (e) {
-        statusBar.className = 'status-bar error';
-        statusBar.textContent = '⚠️ 无法连接服务器';
-      }
+    let chatHistory = [];
+    let isWaiting   = false;
+
+    // ---- textarea 自动撑高 ----
+    messageInput.addEventListener('input', () => {
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+    });
+    messageInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+    });
+
+    // ---- 考生信息面板 ----
+    function toggleProfile() {
+      const form  = document.getElementById('profileForm');
+      const arrow = document.getElementById('profileArrow');
+      const isOpen = form.classList.toggle('open');
+      arrow.classList.toggle('open', isOpen);
     }
 
-    function askFeature(topic) {
-      messageInput.value = `我想了解${topic}，请帮我分析`;
+    function getUserProfile() {
+      return {
+        province: document.getElementById('provinceSelect').value,
+        subject:  document.getElementById('subjectSelect').value,
+        score:    document.getElementById('scoreInput').value
+      };
+    }
+
+    function updateProfileBadge() {
+      const p = getUserProfile();
+      const badge = document.getElementById('profileBadge');
+      const parts = [];
+      if (p.province) parts.push(p.province);
+      if (p.subject)  parts.push(p.subject);
+      if (p.score)    parts.push(p.score + '分');
+      badge.textContent = parts.length ? parts.join(' · ') : '未填写';
+      badge.style.background = parts.length ? '#7c3aed' : '#aaa';
+    }
+
+    // ---- 功能卡片 ----
+    function askFeature(text) {
+      messageInput.value = text;
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
       messageInput.focus();
     }
 
+    // ---- 清空对话 ----
+    function clearChat() {
+      chatArea.innerHTML = '';
+      chatHistory = [];
+      clearBtnArea.innerHTML = '';
+    }
+
+    function showClearBtn() {
+      if (clearBtnArea.innerHTML) return;
+      clearBtnArea.innerHTML = '<div class="clear-btn" onclick="clearChat()">🗑 清空对话</div>';
+    }
+
+    // ---- 核心发送逻辑 ----
     async function sendMessage() {
       const message = messageInput.value.trim();
-      if (!message) return;
+      if (!message || isWaiting) return;
+
+      isWaiting = true;
+      sendBtn.disabled = true;
+      messageInput.value = '';
+      messageInput.style.height = 'auto';
 
       addMessage('user', message);
-      messageInput.value = '';
-      sendBtn.disabled = true;
+      chatHistory.push({ role: 'user', content: message });
+      showClearBtn();
 
-      const typingEl = addMessage('bot', '');
-      typingEl.querySelector('.bubble').innerHTML = `
-        <div class="typing-indicator"><span></span><span></span><span></span></div>
-      `;
+      const botEl  = appendBotPlaceholder();
+      const bubble = botEl.querySelector('.bubble');
+
+      let replyText    = '';
+      let isFirstChunk = true;
 
       try {
         const res = await fetch('/api/chat', {
-          method: 'POST',
+          method:  'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message })
+          body:    JSON.stringify({
+            message,
+            history:     chatHistory.slice(-7, -1),
+            userProfile: getUserProfile()
+          })
         });
 
-        const data = await res.json();
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
-        if (data.error) {
-          typingEl.querySelector('.bubble').innerHTML = `<span style="color:#e74c3c;">❌ ${data.error}</span>`;
-        } else {
-          // 使用打字机效果显示回复
-          const bubble = typingEl.querySelector('.bubble');
-          bubble.innerHTML = '';
-          typewriterEffect(bubble, data.reply);
+        const reader  = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer    = '';
+        let renderPending = false;
+
+        const scheduleRender = () => {
+          if (renderPending) return;
+          renderPending = true;
+          requestAnimationFrame(() => {
+            bubble.innerHTML = renderMarkdown(replyText);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            renderPending = false;
+          });
+        };
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() ?? '';
+
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            let event;
+            try { event = JSON.parse(line.slice(6)); } catch { continue; }
+
+            if (event.type === 'sources') {
+              renderSources(botEl, event.data);
+            } else if (event.type === 'delta') {
+              if (isFirstChunk) { bubble.innerHTML = ''; isFirstChunk = false; }
+              replyText += event.content;
+              scheduleRender();
+            } else if (event.type === 'error') {
+              bubble.innerHTML = `<span style="color:#e74c3c;">❌ ${escHtml(event.message)}</span>`;
+            }
+          }
         }
+
+        // 流结束后确保最终状态正确渲染
+        bubble.innerHTML = renderMarkdown(replyText);
+        chatArea.scrollTop = chatArea.scrollHeight;
+
+        if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
+
       } catch (e) {
-        typingEl.querySelector('.bubble').innerHTML = '<span style="color:#e74c3c;">❌ 网络错误</span>';
+        bubble.innerHTML = '<span style="color:#e74c3c;">❌ 网络错误，请重试</span>';
       }
 
+      isWaiting = false;
       sendBtn.disabled = false;
       messageInput.focus();
     }
 
+    // ---- DOM 辅助 ----
     function addMessage(role, content) {
-      const div = document.createElement('div');
+      const div    = document.createElement('div');
       div.className = `message ${role}`;
       const bubble = document.createElement('div');
       bubble.className = 'bubble';
+      bubble.textContent = content;
       div.appendChild(bubble);
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
-      
-      // 如果是机器人消息，添加打字机效果
-      if (role === 'bot' && content) {
-        typewriterEffect(bubble, content);
-      } else {
-        bubble.textContent = content;
-      }
       return div;
     }
-    
-    // 打字机效果
-    function typewriterEffect(element, text) {
-      let index = 0;
-      const speed = 20; // 每字符间隔毫秒
-      element.innerHTML = '';
-      
-      function type() {
-        if (index < text.length) {
-          // 处理换行
-          if (text[index] === '\n') {
-            element.innerHTML += '<br>';
-          } else {
-            element.innerHTML += text[index];
-          }
-          index++;
-          chatArea.scrollTop = chatArea.scrollHeight;
-          setTimeout(type, speed);
-        }
+
+    function appendBotPlaceholder() {
+      const div    = document.createElement('div');
+      div.className = 'message bot';
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+      div.appendChild(bubble);
+      chatArea.appendChild(div);
+      chatArea.scrollTop = chatArea.scrollHeight;
+      return div;
+    }
+
+    // ---- 来源渲染（数据库结果表格化）----
+    function renderSources(msgEl, sources) {
+      if (!sources || sources.length === 0) return;
+      const block  = document.createElement('div');
+      block.className = 'sources-block';
+      const listId = 'src-' + Date.now();
+
+      // 把录取数据库单独提取出来做表格
+      const dbSource  = sources.find(s => s.category === '录取数据库');
+      const otherSrcs = sources.filter(s => s.category !== '录取数据库');
+
+      let dbHtml = '';
+      if (dbSource) {
+        dbHtml = renderScoreTable(dbSource.preview || '');
       }
-      type();
+
+      const otherHtml = otherSrcs.map(s =>
+        `<div>· ${escHtml(s.source.replace(/.*[\\\/]/, '').replace('.md',''))}</div>`
+      ).join('');
+
+      block.innerHTML = `
+        <span class="sources-toggle" onclick="toggleSources('${listId}')">
+          📚 参考来源 (${sources.length}) ▾
+        </span>
+        <div class="sources-list" id="${listId}">
+          ${dbHtml}
+          ${otherSrcs.length ? `<div style="margin-top:${dbHtml?'8px':'0'}">${otherHtml}</div>` : ''}
+        </div>
+      `;
+      msgEl.appendChild(block);
     }
 
-    function escapeHtml(text) {
-      const div = document.createElement('div');
-      div.textContent = text;
-      return div.innerHTML;
+    // 把 formatDbRows 的文本转成 HTML 表格
+    function renderScoreTable(preview) {
+      if (!preview) return '';
+      const lines = preview.split('\n').filter(l => l.trim());
+      if (lines.length < 2) return `<div>${escHtml(preview)}</div>`;
+
+      const countLine = lines[0]; // "共找到 N 条录取记录："
+      const dataLines = lines.slice(1);
+
+      // 解析每行 "年份 | 学校 | 专业 | 省份 | 批次 | 科目 | 最低分:xxx | 位次:xxx"
+      const rows = dataLines.map(line => {
+        const cols = line.split(' | ').map(c => c.trim());
+        return cols;
+      });
+
+      if (!rows.length) return '';
+
+      // 自动识别列头
+      const headers = ['年份', '学校', '专业组', '省份', '批次', '科目', '最低分', '位次'];
+
+      let tableHtml = `<div class="score-count">${escHtml(countLine)}</div>
+        <div style="overflow-x:auto">
+        <table class="score-table"><thead><tr>`;
+      // 用第一行列数决定显示几列
+      const colCount = Math.min(rows[0]?.length || 0, headers.length);
+      for (let i = 0; i < colCount; i++) {
+        tableHtml += `<th>${headers[i]}</th>`;
+      }
+      tableHtml += '</tr></thead><tbody>';
+      for (const row of rows) {
+        tableHtml += '<tr>';
+        for (let i = 0; i < colCount; i++) {
+          const val = row[i] || '';
+          // 最低分和位次高亮
+          const isScore = val.startsWith('最低分:') || val.startsWith('位次:');
+          const display = val.replace('最低分:', '').replace('位次:', '');
+          tableHtml += `<td${isScore ? ' style="color:#7c3aed;font-weight:600"' : ''}>${escHtml(display)}</td>`;
+        }
+        tableHtml += '</tr>';
+      }
+      tableHtml += '</tbody></table></div>';
+      return tableHtml;
     }
 
-    messageInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') sendMessage();
-    });
+    function toggleSources(id) {
+      document.getElementById(id)?.classList.toggle('open');
+    }
+
+    // ---- Markdown 渲染 ----
+    function renderMarkdown(text) {
+      // 先转义 HTML 特殊字符
+      let html = text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // 标题 ### ## #
+      html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.+)$/gm,  '<h3>$1</h3>');
+      html = html.replace(/^# (.+)$/gm,   '<h3>$1</h3>');
+
+      // 粗体 / 斜体
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.+?)\*/g,     '<em>$1</em>');
+
+      // 有序列表
+      html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ol>${m}</ol>`);
+
+      // 无序列表
+      html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>.*<\/li>\n?)+/g, m => {
+        if (m.includes('<ol>')) return m;
+        return `<ul>${m}</ul>`;
+      });
+
+      // 分隔线
+      html = html.replace(/^---+$/gm, '<hr>');
+
+      // 段落（双换行）
+      html = html.split(/\n\n+/).map(para => {
+        para = para.trim();
+        if (!para) return '';
+        if (/^<(h3|ul|ol|hr)/.test(para)) return para;
+        return `<p>${para.replace(/\n/g, '<br>')}</p>`;
+      }).join('');
+
+      return html;
+    }
+
+    function escHtml(text) {
+      return String(text)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // ---- 系统状态检查 ----
+    async function checkConfig() {
+      try {
+        const data = await fetch('/api/config').then(r => r.json());
+        if (data.hasApiKey) {
+          statusBar.className = 'status-bar ready';
+          const parts = ['✅ 系统就绪'];
+          if (data.hasDb)     parts.push('录取数据 41万条');
+          if (data.hasQdrant) parts.push('知识库 3,320条');
+          statusBar.textContent = parts.join(' · ');
+        } else {
+          statusBar.className = 'status-bar error';
+          statusBar.textContent = '❌ 请配置 SILICONCLOUD_API_KEY';
+        }
+      } catch {
+        statusBar.className = 'status-bar error';
+        statusBar.textContent = '⚠️ 无法连接服务器';
+      }
+    }
 
     checkConfig();
   </script>
