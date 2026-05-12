@@ -417,35 +417,23 @@
       const botEl  = appendBotPlaceholder();
       const bubble = botEl.querySelector('.bubble');
 
-      let replyText  = '';   // 已收到的完整文本
-      let animLen    = 0;    // 动画已播出的字符数
-      let animHandle = null; // rAF 句柄
-      let streamDone = false;// 流是否已结束
-      let frameCount = 0;    // 帧计数，用于节流 Markdown 渲染
-      const SPEED    = 10;   // 每帧播出字符数（~600字/秒 @60fps）
+      let replyText    = '';   // 已收到的完整文本
+      let renderHandle = null; // 节流渲染句柄
 
-      // 匀速打字机动画，每3帧渲染一次 Markdown，避免结尾突变
-      function tick() {
-        if (animLen < replyText.length) {
-          animLen = Math.min(animLen + SPEED, replyText.length);
-          frameCount++;
-          // 每3帧渲染一次 Markdown（约50ms），兼顾流畅与性能
-          if (frameCount % 3 === 0) {
-            bubble.innerHTML = renderMarkdown(replyText.slice(0, animLen));
-          }
+      // 节流渲染：每50ms最多渲染一次，消除打字机停顿感
+      function scheduleRender() {
+        if (renderHandle) return; // 本批50ms内已有待渲染任务
+        renderHandle = setTimeout(() => {
+          renderHandle = null;
+          bubble.innerHTML = renderMarkdown(replyText);
           chatArea.scrollTop = chatArea.scrollHeight;
-          animHandle = requestAnimationFrame(tick);
-        } else {
-          animHandle = null;
-          if (streamDone) {
-            bubble.innerHTML = renderMarkdown(replyText);
-            chatArea.scrollTop = chatArea.scrollHeight;
-          }
-        }
+        }, 50);
       }
 
-      function startAnim() {
-        if (!animHandle) animHandle = requestAnimationFrame(tick);
+      function flushRender() {
+        if (renderHandle) { clearTimeout(renderHandle); renderHandle = null; }
+        bubble.innerHTML = renderMarkdown(replyText);
+        chatArea.scrollTop = chatArea.scrollHeight;
       }
 
       try {
@@ -483,27 +471,20 @@
             } else if (event.type === 'delta') {
               if (!replyText) bubble.textContent = '';
               replyText += event.content;
-              startAnim();
+              scheduleRender();
             } else if (event.type === 'error') {
-              if (animHandle) { cancelAnimationFrame(animHandle); animHandle = null; }
+              flushRender();
               bubble.innerHTML = `<span style="color:#e74c3c;">❌ ${escHtml(event.message)}</span>`;
             }
           }
         }
 
-        // 流结束：标记后让 tick 在追上缓冲区时自动渲染 Markdown
-        streamDone = true;
-        if (!animHandle) {
-          // 动画已停止（追上了），立即渲染
-          bubble.innerHTML = renderMarkdown(replyText);
-          chatArea.scrollTop = chatArea.scrollHeight;
-        }
-
+        // 流结束：立即做最终渲染
+        flushRender();
         if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
 
       } catch (e) {
-        if (animHandle) { cancelAnimationFrame(animHandle); animHandle = null; }
-        streamDone = true;
+        flushRender();
         if (replyText) {
           bubble.innerHTML = renderMarkdown(replyText) +
             '<p style="color:#e67e22;font-size:12px;margin-top:8px;">⚠️ 连接中断，以上为已收到的内容</p>';
