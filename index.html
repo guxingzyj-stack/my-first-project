@@ -240,6 +240,93 @@
     }
     .status-bar.ready { background: rgba(212,237,218,0.9); color: #155724; }
     .status-bar.error { background: rgba(248,215,218,0.9); color: #721c24; }
+
+    /* ===== Tab 导航 ===== */
+    .tab-bar {
+      display: flex; gap: 8px;
+      padding: 0 20px 12px; flex-shrink: 0;
+    }
+    .tab-btn {
+      flex: 1; padding: 9px 0;
+      border: none; border-radius: 10px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; background: rgba(255,255,255,0.6);
+      color: #888;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff; box-shadow: 0 4px 12px rgba(102,126,234,0.35);
+    }
+
+    /* ===== 数据查询面板 ===== */
+    .query-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+    .query-panel.active { display: flex; }
+    .chat-panel { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .chat-panel.hidden { display: none; }
+
+    .query-filters {
+      background: #fff; border-radius: 12px; padding: 14px 16px;
+      margin: 0 20px 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .filter-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+    .filter-row:last-child { margin-bottom: 0; }
+    .filter-select, .filter-input {
+      flex: 1; min-width: 120px; padding: 8px 10px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; color: #333; background: #fafafa;
+      outline: none; transition: border-color 0.2s;
+    }
+    .filter-select:focus, .filter-input:focus { border-color: #7c3aed; background: #fff; }
+    .query-btn {
+      padding: 8px 20px; border: none; border-radius: 8px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
+      box-shadow: 0 3px 10px rgba(102,126,234,0.3); white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .query-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .query-results {
+      flex: 1; overflow-y: auto; padding: 0 20px 20px;
+    }
+    .result-info {
+      font-size: 12px; color: #888; margin-bottom: 8px; text-align: right;
+    }
+    .result-table-wrap {
+      background: #fff; border-radius: 12px; overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .result-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+    }
+    .result-table th {
+      background: #f0ebff; color: #7c3aed; padding: 10px 10px;
+      text-align: left; font-weight: 600;
+      border-bottom: 2px solid #e0d4ff; white-space: nowrap;
+    }
+    .result-table td {
+      padding: 9px 10px; border-bottom: 1px solid #f5f5f5;
+      color: #444; vertical-align: top;
+    }
+    .result-table tr:last-child td { border-bottom: none; }
+    .result-table tr:hover td { background: #faf8ff; }
+    .score-highlight { color: #e74c3c; font-weight: 700; }
+    .rank-text { color: #888; font-size: 12px; }
+    .query-empty {
+      text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px;
+    }
+    .pagination {
+      display: flex; justify-content: center; align-items: center;
+      gap: 8px; padding: 12px 0;
+    }
+    .page-btn {
+      padding: 5px 12px; border: 1.5px solid #e0d4ff; border-radius: 6px;
+      background: #fff; color: #7c3aed; font-size: 13px; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .page-btn:hover { background: #f0ebff; }
+    .page-btn.cur { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -257,6 +344,14 @@
   <!-- 状态栏 -->
   <div class="status-bar" id="statusBar">检查系统状态...</div>
 
+  <!-- Tab 导航 -->
+  <div class="tab-bar">
+    <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')">💬 智能咨询</button>
+    <button class="tab-btn" id="tabData" onclick="switchTab('data')">📊 数据查询</button>
+  </div>
+
+  <!-- 智能咨询面板 -->
+  <div class="chat-panel" id="chatPanel">
   <!-- 主内容 -->
   <div class="main-content">
 
@@ -326,11 +421,33 @@
   </div>
 
   <!-- 底部输入 -->
-  <div class="input-area">
+  <div class="input-area" id="chatInputArea">
     <div class="input-box">
       <textarea id="messageInput" rows="1"
         placeholder="输入问题，如：湖南理科 580 分，想学计算机，能上哪些学校？"></textarea>
       <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+    </div>
+  </div>
+  </div><!-- end chat-panel -->
+
+  <!-- 数据查询面板 -->
+  <div class="query-panel" id="queryPanel">
+    <!-- 筛选条件 -->
+    <div class="query-filters">
+      <div class="filter-row">
+        <select class="filter-select" id="qProvince"><option value="">选择省份</option></select>
+        <select class="filter-select" id="qYear"><option value="">选择年份</option></select>
+        <select class="filter-select" id="qSubject"><option value="">选科/类别</option></select>
+      </div>
+      <div class="filter-row">
+        <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如：武汉大学）">
+        <select class="filter-select" id="qBatch" style="max-width:140px"><option value="">选择批次</option></select>
+        <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
+      </div>
+    </div>
+    <!-- 查询结果 -->
+    <div class="query-results" id="queryResults">
+      <div class="query-empty">选择省份或院校后点击查询</div>
     </div>
   </div>
 
@@ -343,6 +460,136 @@
 
     let chatHistory = [];
     let isWaiting   = false;
+
+    // ==================== Tab 切换 ====================
+    function switchTab(tab) {
+      const chatPanel   = document.getElementById('chatPanel');
+      const queryPanel  = document.getElementById('queryPanel');
+      const tabChat     = document.getElementById('tabChat');
+      const tabData     = document.getElementById('tabData');
+      const chatInputArea = document.getElementById('chatInputArea');
+
+      if (tab === 'chat') {
+        chatPanel.classList.remove('hidden');
+        queryPanel.classList.remove('active');
+        chatInputArea.style.display = '';
+        tabChat.classList.add('active');
+        tabData.classList.remove('active');
+      } else {
+        chatPanel.classList.add('hidden');
+        queryPanel.classList.add('active');
+        chatInputArea.style.display = 'none';
+        tabData.classList.add('active');
+        tabChat.classList.remove('active');
+        loadQueryOptions();
+      }
+    }
+
+    // ==================== 数据查询 ====================
+    let optionsLoaded = false;
+
+    async function loadQueryOptions() {
+      if (optionsLoaded) return;
+      try {
+        const res  = await fetch('/api/scores/options');
+        const data = await res.json();
+        fillSelect('qProvince', data.provinces);
+        fillSelect('qYear',     data.years);
+        fillSelect('qSubject',  data.subjects);
+        fillSelect('qBatch',    data.batches);
+        optionsLoaded = true;
+      } catch (e) { console.error('加载筛选项失败', e); }
+    }
+
+    function fillSelect(id, values) {
+      const sel = document.getElementById(id);
+      const first = sel.options[0];
+      sel.innerHTML = '';
+      sel.appendChild(first);
+      values.forEach(v => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = v;
+        sel.appendChild(opt);
+      });
+    }
+
+    let currentPage = 1;
+
+    async function doQuery(page) {
+      const province = document.getElementById('qProvince').value;
+      const year     = document.getElementById('qYear').value;
+      const subject  = document.getElementById('qSubject').value;
+      const school   = document.getElementById('qSchool').value.trim();
+      const batch    = document.getElementById('qBatch').value;
+
+      if (!province && !school) {
+        document.getElementById('queryResults').innerHTML =
+          '<div class="query-empty">请至少选择省份或填写院校名称</div>';
+        return;
+      }
+
+      const btn = document.getElementById('queryBtn');
+      btn.disabled = true; btn.textContent = '查询中…';
+
+      const params = new URLSearchParams();
+      if (province) params.set('province', province);
+      if (year)     params.set('year', year);
+      if (subject)  params.set('subject', subject);
+      if (school)   params.set('school', school);
+      if (batch)    params.set('batch', batch);
+      params.set('page', page);
+
+      try {
+        const res  = await fetch('/api/scores?' + params);
+        const data = await res.json();
+        if (data.error) throw new Error(data.error);
+        currentPage = page;
+        renderQueryResults(data);
+      } catch (e) {
+        document.getElementById('queryResults').innerHTML =
+          `<div class="query-empty" style="color:#e74c3c">查询失败：${e.message}</div>`;
+      } finally {
+        btn.disabled = false; btn.textContent = '查询';
+      }
+    }
+
+    function renderQueryResults({ total, page, pageSize, rows }) {
+      const container = document.getElementById('queryResults');
+      if (!rows || rows.length === 0) {
+        container.innerHTML = '<div class="query-empty">暂无匹配数据，换个条件试试</div>';
+        return;
+      }
+      const totalPages = Math.ceil(total / pageSize);
+      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页</div>`;
+      html += '<div class="result-table-wrap"><table class="result-table">';
+      html += '<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th></tr></thead><tbody>';
+      for (const r of rows) {
+        html += `<tr>
+          <td style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
+          <td style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
+          <td style="white-space:nowrap">${r.year||''}</td>
+          <td style="white-space:nowrap">${escHtml(r.subject||'')}</td>
+          <td style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
+          <td><span class="score-highlight">${r.min_score||'-'}</span></td>
+          <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
+        </tr>`;
+      }
+      html += '</tbody></table></div>';
+
+      // 分页
+      if (totalPages > 1) {
+        html += '<div class="pagination">';
+        html += `<button class="page-btn" onclick="doQuery(${page-1})" ${page<=1?'disabled':''}>‹ 上一页</button>`;
+        const start = Math.max(1, page-2), end = Math.min(totalPages, page+2);
+        for (let p = start; p <= end; p++) {
+          html += `<button class="page-btn ${p===page?'cur':''}" onclick="doQuery(${p})">${p}</button>`;
+        }
+        html += `<button class="page-btn" onclick="doQuery(${page+1})" ${page>=totalPages?'disabled':''}>下一页 ›</button>`;
+        html += '</div>';
+      }
+
+      container.innerHTML = html;
+    }
 
     // ---- textarea 自动撑高 ----
     messageInput.addEventListener('input', () => {
