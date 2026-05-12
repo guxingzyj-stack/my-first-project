@@ -16,7 +16,7 @@ env:
   
   # LLM 模型配置
   - key: LLM_MODEL
-    value: "deepseek-ai/DeepSeek-V2.5"
+    value: "deepseek-ai/DeepSeek-V4-Flash"
     type: PLAIN
   
   # Embedding 模型配置
