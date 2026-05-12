@@ -452,14 +452,20 @@ const server = http.createServer(async (req, res) => {
       // SSE 响应头
       res.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
-        "Cache-Control": "no-cache",
+        "Cache-Control": "no-cache, no-transform",
         "Connection": "keep-alive",
-        "X-Accel-Buffering": "no"
+        "X-Accel-Buffering": "no",
+        "X-Content-Type-Options": "nosniff"
       });
 
       const emit = (data) => {
         try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {}
       };
+
+      // 心跳：每 10 秒发一次注释行，防止代理/CDN 因空闲超时断开 SSE 连接
+      const heartbeat = setInterval(() => {
+        try { res.write(": ping\n\n"); } catch {}
+      }, 10000);
 
       // 1. 检索知识库
       const searchResults = await searchKnowledgeBase(message, userProfile);
@@ -501,15 +507,19 @@ const server = http.createServer(async (req, res) => {
       messages.push({ role: "user", content: context + "用户问题：" + message });
 
       // 4. 流式调用 LLM
-      await callLLMStream(messages, (chunk) => {
-        emit({ type: "delta", content: chunk });
-      });
-
-      emit({ type: "done" });
+      try {
+        await callLLMStream(messages, (chunk) => {
+          emit({ type: "delta", content: chunk });
+        });
+        emit({ type: "done" });
+      } finally {
+        clearInterval(heartbeat);
+      }
       res.end();
     } catch (error) {
       console.error("聊天错误:", error);
       try {
+        clearInterval(heartbeat);
         res.write(`data: ${JSON.stringify({ type: "error", message: error.message || "服务器错误" })}\n\n`);
         res.end();
       } catch {}
