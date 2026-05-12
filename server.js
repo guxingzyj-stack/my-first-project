@@ -309,19 +309,28 @@ function extractKeywords(text) {
 async function callLLMStream(messages, onChunk) {
   if (!SILICONCLOUD_API_KEY) throw new Error("SILICONCLOUD_API_KEY 未配置");
 
-  const response = await fetch(`${SILICONCLOUD_BASE_URL}/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${SILICONCLOUD_API_KEY}`
-    },
-    body: JSON.stringify({
-      model: LLM_MODEL,
-      messages,
-      stream: true,
-      temperature: 0.7
-    })
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 120_000);
+
+  let response;
+  try {
+    response = await fetch(`${SILICONCLOUD_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SILICONCLOUD_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: LLM_MODEL,
+        messages,
+        stream: true,
+        temperature: 0.7
+      }),
+      signal: controller.signal
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!response.ok) {
     const error = await response.text();
