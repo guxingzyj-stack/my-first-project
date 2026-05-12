@@ -480,7 +480,13 @@
         if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
 
       } catch (e) {
-        bubble.innerHTML = '<span style="color:#e74c3c;">❌ 网络错误，请重试</span>';
+        if (replyText) {
+          // 已有部分内容，保留并追加提示
+          bubble.innerHTML = renderMarkdown(replyText) +
+            '<p style="color:#e67e22;font-size:12px;margin-top:8px;">⚠️ 连接中断，以上为已收到的内容</p>';
+        } else {
+          bubble.innerHTML = '<span style="color:#e74c3c;">❌ 网络错误，请重试</span>';
+        }
       }
 
       isWaiting = false;
