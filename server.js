@@ -86,25 +86,72 @@ function detectDbSchema(database) {
   return { tableName: mainTable, columns, colMap, rowCount: maxCount };
 }
 
-function initDatabase() {
+function tryLoadDatabase() {
   if (!Database) return;
-  if (!fs.existsSync(SCORE_DB_PATH)) {
-    console.log("📊 录取数据库不存在，跳过（可将 gaokao_2025.db 放入 07_录取数据/ 目录启用）");
-    return;
-  }
   try {
-    db = new Database(SCORE_DB_PATH, { readonly: true });
-    dbSchema = detectDbSchema(db);
-    if (!dbSchema) { db = null; return; }
+    const testDb = new Database(SCORE_DB_PATH, { readonly: true });
+    const schema = detectDbSchema(testDb);
+    if (!schema) { testDb.close(); return false; }
+    db = testDb;
+    dbSchema = schema;
     const mapped = Object.entries(dbSchema.colMap)
       .filter(([, v]) => v)
       .map(([k, v]) => `${k}→${v}`)
       .join(", ");
     console.log(`✅ 录取数据库已加载: ${dbSchema.tableName} (${dbSchema.rowCount.toLocaleString()} 条记录)`);
     console.log(`   字段映射: ${mapped}`);
+    return true;
   } catch (e) {
     console.error("❌ 数据库加载失败:", e.message);
-    db = null;
+    return false;
+  }
+}
+
+async function downloadDatabase(url) {
+  console.log(`⬇️  正在下载录取数据库: ${url}`);
+  const dir = path.dirname(SCORE_DB_PATH);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+
+  const response = await fetch(url, { redirect: "follow" });
+  if (!response.ok) throw new Error(`下载失败: HTTP ${response.status}`);
+
+  const total = parseInt(response.headers.get("content-length") || "0");
+  let received = 0;
+  const chunks = [];
+
+  const reader = response.body.getReader();
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.length;
+    if (total > 0 && received % (10 * 1024 * 1024) < value.length) {
+      console.log(`   已下载 ${Math.round(received / 1024 / 1024)}MB / ${Math.round(total / 1024 / 1024)}MB`);
+    }
+  }
+
+  const buffer = Buffer.concat(chunks);
+  fs.writeFileSync(SCORE_DB_PATH, buffer);
+  console.log(`✅ 数据库下载完成 (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+}
+
+async function initDatabase() {
+  if (!Database) return;
+
+  // 已存在则直接加载
+  if (fs.existsSync(SCORE_DB_PATH) && tryLoadDatabase()) return;
+
+  // 尝试从环境变量指定的 URL 下载
+  const downloadUrl = process.env.DB_DOWNLOAD_URL;
+  if (downloadUrl) {
+    try {
+      await downloadDatabase(downloadUrl);
+      tryLoadDatabase();
+    } catch (e) {
+      console.error("❌ 数据库下载失败:", e.message);
+    }
+  } else {
+    console.log("📊 录取数据库未找到（可设置 DB_DOWNLOAD_URL 环境变量自动下载）");
   }
 }
 
@@ -569,9 +616,8 @@ const server = http.createServer(async (req, res) => {
 });
 
 // 启动
-initDatabase();
-
-server.listen(PORT, HOST, () => {
+initDatabase().then(() => {
+  server.listen(PORT, HOST, () => {
   console.log("=".repeat(50));
   console.log("🎓 高考志愿咨询系统已启动（增强版）");
   console.log("=".repeat(50));
@@ -581,4 +627,5 @@ server.listen(PORT, HOST, () => {
   console.log(`🔧 录取数据库: ${db ? "✅ 已加载 " + dbSchema.rowCount.toLocaleString() + " 条" : "❌ 未找到（可选）"}`);
   console.log(`🔧 Qdrant: ${QDRANT_URL ? "✅ " + QDRANT_URL : "❌ 未配置（可选）"}`);
   console.log("=".repeat(50));
+  });
 });
