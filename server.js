@@ -616,6 +616,74 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // ==================== 数据查询 API ====================
+
+  // 获取筛选项（省份、年份、批次）
+  if (pathname === "/api/scores/options" && req.method === "GET") {
+    if (!db) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "数据库未加载" })); return;
+    }
+    try {
+      const provinces = db.prepare("SELECT DISTINCT province FROM major_scores WHERE province IS NOT NULL ORDER BY province").all().map(r => r.province);
+      const years     = db.prepare("SELECT DISTINCT year FROM major_scores WHERE year IS NOT NULL ORDER BY year DESC").all().map(r => r.year);
+      const batches   = db.prepare("SELECT DISTINCT batch FROM major_scores WHERE batch IS NOT NULL ORDER BY batch").all().map(r => r.batch);
+      const subjects  = db.prepare("SELECT DISTINCT subject FROM major_scores WHERE subject IS NOT NULL ORDER BY subject").all().map(r => r.subject);
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ provinces, years, batches, subjects }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // 查询录取数据
+  if (pathname === "/api/scores" && req.method === "GET") {
+    if (!db) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "数据库未加载" })); return;
+    }
+    try {
+      const province = url.searchParams.get("province") || "";
+      const school   = url.searchParams.get("school")   || "";
+      const year     = url.searchParams.get("year")     || "";
+      const subject  = url.searchParams.get("subject")  || "";
+      const batch    = url.searchParams.get("batch")    || "";
+      const page     = parseInt(url.searchParams.get("page") || "1");
+      const pageSize = 50;
+
+      const conditions = [];
+      const params     = [];
+      if (province) { conditions.push("province = ?"); params.push(province); }
+      if (school)   { conditions.push("school LIKE ?"); params.push(`%${school}%`); }
+      if (year)     { conditions.push("year = ?"); params.push(year); }
+      if (subject)  { conditions.push("subject = ?"); params.push(subject); }
+      if (batch)    { conditions.push("batch = ?"); params.push(batch); }
+
+      if (conditions.length === 0) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "请至少填写一个筛选条件" })); return;
+      }
+
+      const where = "WHERE " + conditions.join(" AND ");
+      const total = db.prepare(`SELECT COUNT(*) as cnt FROM major_scores ${where}`).get(...params).cnt;
+      const rows  = db.prepare(
+        `SELECT school, province, year, subject, batch, major_group, min_score, min_rank
+         FROM major_scores ${where}
+         ORDER BY year DESC, min_score DESC
+         LIMIT ? OFFSET ?`
+      ).all(...params, pageSize, (page - 1) * pageSize);
+
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ total, page, pageSize, rows }));
+    } catch (e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // 配置信息
   if (pathname === "/api/config") {
     res.writeHead(200, { "Content-Type": "application/json" });
