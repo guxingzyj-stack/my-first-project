@@ -548,10 +548,10 @@ const server = http.createServer(async (req, res) => {
         try { res.write(`data: ${JSON.stringify(data)}\n\n`); } catch {}
       };
 
-      // 心跳：每 10 秒发一次注释行，防止代理/CDN 因空闲超时断开 SSE 连接
+      // 心跳：每 5 秒发一次注释行，防止代理/CDN 因空闲超时断开 SSE 连接
       const heartbeat = setInterval(() => {
         try { res.write(": ping\n\n"); } catch {}
-      }, 10000);
+      }, 5000);
 
       // 1. 检索知识库
       const searchResults = await searchKnowledgeBase(message, userProfile);
