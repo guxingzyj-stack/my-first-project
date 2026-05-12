@@ -465,7 +465,12 @@ const server = http.createServer(async (req, res) => {
       const searchResults = await searchKnowledgeBase(message, userProfile);
       emit({
         type: "sources",
-        data: searchResults.map(r => ({ category: r.category, source: r.source, score: r.score }))
+        data: searchResults.map(r => ({
+          category: r.category,
+          source:   r.source,
+          score:    r.score,
+          preview:  r.category === "录取数据库" ? r.preview : undefined
+        }))
       });
 
       // 2. 组装上下文
