@@ -6,6 +6,7 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
+const https = require("https");
 const { URL } = require("url");
 
 
@@ -305,60 +306,59 @@ function extractKeywords(text) {
 }
 
 // ==================== LLM 调用（流式）====================
+// 使用 https.request 绕开 Node 18 built-in fetch 的 undici 超时限制
 
-async function callLLMStream(messages, onChunk) {
+function callLLMStream(messages, onChunk) {
   if (!SILICONCLOUD_API_KEY) throw new Error("SILICONCLOUD_API_KEY 未配置");
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 120_000);
+  const url  = new URL(`${SILICONCLOUD_BASE_URL}/chat/completions`);
+  const body = JSON.stringify({ model: LLM_MODEL, messages, stream: true, temperature: 0.7 });
 
-  let response;
-  try {
-    response = await fetch(`${SILICONCLOUD_BASE_URL}/chat/completions`, {
-      method: "POST",
+  return new Promise((resolve, reject) => {
+    const req = https.request({
+      hostname: url.hostname,
+      port:     url.port || 443,
+      path:     url.pathname + url.search,
+      method:   "POST",
       headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${SILICONCLOUD_API_KEY}`
+        "Content-Type":   "application/json",
+        "Authorization":  `Bearer ${SILICONCLOUD_API_KEY}`,
+        "Content-Length": Buffer.byteLength(body)
       },
-      body: JSON.stringify({
-        model: LLM_MODEL,
-        messages,
-        stream: true,
-        temperature: 0.7
-      }),
-      signal: controller.signal
+      timeout: 300_000   // 5 分钟 socket 超时，远大于 undici 默认 30s
+    }, (res) => {
+      if (res.statusCode !== 200) {
+        let errBody = "";
+        res.on("data", d => errBody += d);
+        res.on("end",  () => reject(new Error(`LLM API 错误: ${res.statusCode} - ${errBody}`)));
+        return;
+      }
+
+      let buffer = "";
+      res.on("data", (chunk) => {
+        buffer += chunk.toString();
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? "";
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const data = line.slice(6).trim();
+          if (data === "[DONE]") continue;
+          try {
+            const parsed = JSON.parse(data);
+            const content = parsed.choices?.[0]?.delta?.content;
+            if (content) onChunk(content);
+          } catch {}
+        }
+      });
+      res.on("end",   resolve);
+      res.on("error", reject);
     });
-  } finally {
-    clearTimeout(timeoutId);
-  }
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`LLM API 错误: ${response.status} - ${error}`);
-  }
-
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      if (!line.startsWith("data: ")) continue;
-      const data = line.slice(6).trim();
-      if (data === "[DONE]") continue;
-      try {
-        const parsed = JSON.parse(data);
-        const content = parsed.choices?.[0]?.delta?.content;
-        if (content) onChunk(content);
-      } catch {}
-    }
-  }
+    req.on("error",   reject);
+    req.on("timeout", () => { req.destroy(); reject(new Error("LLM API 请求超时（5分钟）")); });
+    req.write(body);
+    req.end();
+  });
 }
 
 // ==================== Embedding + Qdrant ====================
