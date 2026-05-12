@@ -325,7 +325,7 @@ function callLLMStream(messages, onChunk) {
         "Authorization":  `Bearer ${SILICONCLOUD_API_KEY}`,
         "Content-Length": Buffer.byteLength(body)
       },
-      timeout: 300_000   // 5 分钟 socket 超时，远大于 undici 默认 30s
+      timeout: 60_000    // 60s socket 空闲超时（流式传输中数据持续流动不会触发）
     }, (res) => {
       if (res.statusCode !== 200) {
         let errBody = "";
@@ -355,7 +355,7 @@ function callLLMStream(messages, onChunk) {
     });
 
     req.on("error",   reject);
-    req.on("timeout", () => { req.destroy(); reject(new Error("LLM API 请求超时（5分钟）")); });
+    req.on("timeout", () => { req.destroy(); reject(new Error("LLM API 响应超时（60秒），请稍后重试")); });
     req.write(body);
     req.end();
   });
