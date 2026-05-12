@@ -71,43 +71,44 @@
       line-height: 1.5;
     }
     
-    /* 功能卡片列表 */
+    /* 功能卡片列表 - 田字格布局 */
     .feature-list {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 20px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 16px;
     }
     
     .feature-card {
       background: #fff;
-      border-radius: 16px;
-      padding: 16px 20px;
+      border-radius: 12px;
+      padding: 14px 10px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 16px;
+      gap: 8px;
       cursor: pointer;
       transition: all 0.2s ease;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     }
     
     .feature-card:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     
     .feature-card:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
     }
     
     .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 24px;
+      font-size: 20px;
       flex-shrink: 0;
     }
     
@@ -117,9 +118,10 @@
     .icon-green { background: #e8f5e9; }
     
     .feature-text {
-      font-size: 16px;
+      font-size: 13px;
       color: #333;
       font-weight: 500;
+      text-align: center;
     }
     
     /* 聊天区域 */
@@ -381,7 +383,10 @@
         if (data.error) {
           typingEl.querySelector('.bubble').innerHTML = `<span style="color:#e74c3c;">❌ ${data.error}</span>`;
         } else {
-          typingEl.querySelector('.bubble').innerHTML = escapeHtml(data.reply).replace(/\n/g, '<br>');
+          // 使用打字机效果显示回复
+          const bubble = typingEl.querySelector('.bubble');
+          bubble.innerHTML = '';
+          typewriterEffect(bubble, data.reply);
         }
       } catch (e) {
         typingEl.querySelector('.bubble').innerHTML = '<span style="color:#e74c3c;">❌ 网络错误</span>';
@@ -394,10 +399,41 @@
     function addMessage(role, content) {
       const div = document.createElement('div');
       div.className = `message ${role}`;
-      div.innerHTML = `<div class="bubble">${escapeHtml(content)}</div>`;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      div.appendChild(bubble);
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
+      
+      // 如果是机器人消息，添加打字机效果
+      if (role === 'bot' && content) {
+        typewriterEffect(bubble, content);
+      } else {
+        bubble.textContent = content;
+      }
       return div;
+    }
+    
+    // 打字机效果
+    function typewriterEffect(element, text) {
+      let index = 0;
+      const speed = 20; // 每字符间隔毫秒
+      element.innerHTML = '';
+      
+      function type() {
+        if (index < text.length) {
+          // 处理换行
+          if (text[index] === '\n') {
+            element.innerHTML += '<br>';
+          } else {
+            element.innerHTML += text[index];
+          }
+          index++;
+          chatArea.scrollTop = chatArea.scrollHeight;
+          setTimeout(type, speed);
+        }
+      }
+      type();
     }
 
     function escapeHtml(text) {
