@@ -306,7 +306,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   // 健康检查
-  if (pathname === "/health") {
+  if (pathname === "/api/health") {
     res.writeHead(200, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ status: "ok", timestamp: new Date().toISOString() }));
     return;
