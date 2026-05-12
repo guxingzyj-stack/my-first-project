@@ -16,7 +16,10 @@ if (fs.existsSync(envPath)) {
   const envContent = fs.readFileSync(envPath, "utf-8");
   for (const line of envContent.split(/\r?\n/)) {
     const match = line.match(/^([^#=]+)=(.+)/);
-    if (match) process.env[match[1].trim()] = match[2].trim();
+    // 只补充未设置的变量，不覆盖 Zeabur/Docker 已注入的环境变量
+    if (match && !process.env[match[1].trim()]) {
+      process.env[match[1].trim()] = match[2].trim();
+    }
   }
   console.log("✅ 已加载 .env 文件");
 }
