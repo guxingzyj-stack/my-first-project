@@ -421,18 +421,22 @@
       let animLen    = 0;    // 动画已播出的字符数
       let animHandle = null; // rAF 句柄
       let streamDone = false;// 流是否已结束
-      const SPEED    = 10;   // 每帧播出字符数（~600字/秒 @60fps，中文阅读感自然）
+      let frameCount = 0;    // 帧计数，用于节流 Markdown 渲染
+      const SPEED    = 10;   // 每帧播出字符数（~600字/秒 @60fps）
 
-      // 匀速打字机动画：从缓冲区匀速播出文字
+      // 匀速打字机动画，每3帧渲染一次 Markdown，避免结尾突变
       function tick() {
         if (animLen < replyText.length) {
           animLen = Math.min(animLen + SPEED, replyText.length);
-          bubble.textContent = replyText.slice(0, animLen);
+          frameCount++;
+          // 每3帧渲染一次 Markdown（约50ms），兼顾流畅与性能
+          if (frameCount % 3 === 0) {
+            bubble.innerHTML = renderMarkdown(replyText.slice(0, animLen));
+          }
           chatArea.scrollTop = chatArea.scrollHeight;
           animHandle = requestAnimationFrame(tick);
         } else {
           animHandle = null;
-          // 动画追上了缓冲区；若流已结束则渲染 Markdown
           if (streamDone) {
             bubble.innerHTML = renderMarkdown(replyText);
             chatArea.scrollTop = chatArea.scrollHeight;
