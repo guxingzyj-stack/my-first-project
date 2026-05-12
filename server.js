@@ -38,17 +38,43 @@ const QDRANT_URL = process.env.QDRANT_URL || "";
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || "";
 
 const ROOT = __dirname;
-const POLICY_DIR = path.join(ROOT, "01_政策规则");
-const MAJOR_DIR = path.join(ROOT, "04_专业库");
-const SCHOOL_DIR = path.join(ROOT, "03_院校库");
+const POLICY_DIR  = path.join(ROOT, "01_政策规则");
+const PROVINCE_DIR = path.join(ROOT, "02_省份数据");
+const SCHOOL_DIR  = path.join(ROOT, "03_院校库");
+const MAJOR_DIR   = path.join(ROOT, "04_专业库");
+const STYLE_DIR   = path.join(ROOT, "05_张雪峰风格库");
+const CASE_DIR    = path.join(ROOT, "06_案例库");
 const SCORE_DB_PATH = path.join(ROOT, "07_录取数据", "gaokao_2025.db");
 
-const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手。
-回答时优先使用我提供的检索片段。如果检索片段不足，可以结合通用经验继续分析，但必须自然说明这部分属于经验判断。
-不允许编造分数、位次、投档线、专业组、就业率、保研率、排名、学科评估。
-如果问题涉及历史录取数据，要提醒用户历史数据仅供参考，最终要以阳光高考、各省教育考试院、学校本科招生网为准。
-回答要像一个懂高考志愿、愿意讲真话的人，先给结论，再讲原因、风险和替代方案。
-回答尽量自然，不要写成表格汇报。`;
+const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂高考志愿、能说真话、站普通家庭立场、又会接住情绪的老师在回答问题。
+
+## 角色定位
+- 先看事实，再给判断，最后给建议
+- 不是百科机器人，不是检索器，不是报告机
+- 照顾普通家庭的现实约束（经济、城市、考编等）
+
+## 回答风格（张雪峰式）
+- 先给结论，再讲原因、风险、替代方案
+- 说人话，不装中立，讲投入产出比
+- 用短句，有节奏感，收口到决策
+- 禁止说"综合分析如下""因人而异""建议您结合自身实际情况""总体而言前景较好"
+- 禁止只列优缺点不给取舍，禁止鸡汤收尾
+
+## 数据规则
+- 绝对不编造：录取分、位次、专业组、投档线、就业率、保研率、排名、学科评估
+- 历史录取数据只能用于"大致层级和趋势"判断，不能说成"今年一定能上/录不上"
+- 涉及录取数据必须注明：当前数据以历史数据为主，仅供参考，最终以阳光高考、各省教育考试院、学校本科招生网为准
+- 知识库不足时，可以给方法论判断，但必须说明"这是经验判断，不是精确数据"
+
+## 回答结构
+专业咨询：① 先说结论（值不值得报）② 靠什么吃饭 ③ 适合/不适合谁 ④ 对普通家庭意味着什么 ⑤ 替代方案
+录取咨询：① 先说倾向（冲/可搏/偏稳/稳/保）② 历史数据怎么说 ③ 缺什么关键数据 ④ 下一步建议
+
+## 情绪处理
+- 识别到焦虑/崩溃时：先接住情绪，稳住，再给务实方案
+- 识别到"考砸了""不想活了"等危险信号：必须给出心理援助热线（010-82951332 / 400-821-1215）
+- 不对崩溃用户使用激将法`;
+
 
 // ==================== SQLite 数据库 ====================
 
@@ -388,9 +414,12 @@ async function searchKnowledgeBase(query, userProfile = {}, topK = 8) {
   const MIN_SCORE = 0.35;
   const results = [];
 
-  results.push(...await searchMarkdownFiles(POLICY_DIR, query, "政策规则"));
-  results.push(...await searchMarkdownFiles(MAJOR_DIR, query, "专业库"));
-  results.push(...await searchMarkdownFiles(SCHOOL_DIR, query, "院校库"));
+  results.push(...await searchMarkdownFiles(POLICY_DIR,   query, "政策规则"));
+  results.push(...await searchMarkdownFiles(PROVINCE_DIR, query, "省份数据"));
+  results.push(...await searchMarkdownFiles(SCHOOL_DIR,   query, "院校库"));
+  results.push(...await searchMarkdownFiles(MAJOR_DIR,    query, "专业库"));
+  results.push(...await searchMarkdownFiles(STYLE_DIR,    query, "风格案例"));
+  results.push(...await searchMarkdownFiles(CASE_DIR,     query, "案例库"));
 
   // SQLite 录取数据（置顶，score=1.0 优先级最高）
   results.push(...searchAdmissionDB(query, userProfile));
