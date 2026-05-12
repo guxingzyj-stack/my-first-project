@@ -8,6 +8,14 @@ const path = require("path");
 const http = require("http");
 const { URL } = require("url");
 
+// 为 Node.js 内置 fetch (undici) 设置更长的超时，避免 LLM API 慢响应时 HeadersTimeout
+const { Agent, setGlobalDispatcher } = require("undici");
+setGlobalDispatcher(new Agent({
+  headersTimeout: 120_000,  // 等待响应头最长 2 分钟
+  bodyTimeout:    300_000,  // 等待响应体最长 5 分钟（流式场景）
+  connectTimeout:  30_000,  // TCP 连接超时 30 秒
+}));
+
 // 加载 .env 文件（本地开发时使用）
 const envPath = path.join(__dirname, ".env");
 if (fs.existsSync(envPath)) {
