@@ -420,15 +420,24 @@
       let replyText  = '';   // 已收到的完整文本
       let animLen    = 0;    // 动画已播出的字符数
       let animHandle = null; // rAF 句柄
+      let streamDone = false;// 流是否已结束
       const SPEED    = 10;   // 每帧播出字符数（~600字/秒 @60fps，中文阅读感自然）
 
       // 匀速打字机动画：从缓冲区匀速播出文字
       function tick() {
-        if (animLen >= replyText.length) { animHandle = null; return; }
-        animLen = Math.min(animLen + SPEED, replyText.length);
-        bubble.textContent = replyText.slice(0, animLen);
-        chatArea.scrollTop = chatArea.scrollHeight;
-        animHandle = requestAnimationFrame(tick);
+        if (animLen < replyText.length) {
+          animLen = Math.min(animLen + SPEED, replyText.length);
+          bubble.textContent = replyText.slice(0, animLen);
+          chatArea.scrollTop = chatArea.scrollHeight;
+          animHandle = requestAnimationFrame(tick);
+        } else {
+          animHandle = null;
+          // 动画追上了缓冲区；若流已结束则渲染 Markdown
+          if (streamDone) {
+            bubble.innerHTML = renderMarkdown(replyText);
+            chatArea.scrollTop = chatArea.scrollHeight;
+          }
+        }
       }
 
       function startAnim() {
@@ -478,23 +487,19 @@
           }
         }
 
-        // 流结束：等动画播完再渲染 Markdown
-        const finalize = () => {
-          if (animLen < replyText.length) {
-            animHandle = requestAnimationFrame(finalize);
-          } else {
-            animHandle = null;
-            bubble.innerHTML = renderMarkdown(replyText);
-            chatArea.scrollTop = chatArea.scrollHeight;
-          }
-        };
-        if (animHandle) { cancelAnimationFrame(animHandle); }
-        animHandle = requestAnimationFrame(finalize);
+        // 流结束：标记后让 tick 在追上缓冲区时自动渲染 Markdown
+        streamDone = true;
+        if (!animHandle) {
+          // 动画已停止（追上了），立即渲染
+          bubble.innerHTML = renderMarkdown(replyText);
+          chatArea.scrollTop = chatArea.scrollHeight;
+        }
 
         if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
 
       } catch (e) {
         if (animHandle) { cancelAnimationFrame(animHandle); animHandle = null; }
+        streamDone = true;
         if (replyText) {
           bubble.innerHTML = renderMarkdown(replyText) +
             '<p style="color:#e67e22;font-size:12px;margin-top:8px;">⚠️ 连接中断，以上为已收到的内容</p>';
