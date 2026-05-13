@@ -388,18 +388,39 @@ function callLLMStream(messages, onChunk) {
 
 // ==================== Embedding + Qdrant ====================
 
+function httpsPost(urlStr, headers, body) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(urlStr);
+    const buf = Buffer.from(body);
+    const req = https.request({
+      hostname: u.hostname, port: u.port || 443,
+      path: u.pathname + u.search, method: "POST",
+      headers: { ...headers, "Content-Length": buf.length },
+      timeout: 30_000,
+    }, (res) => {
+      let data = "";
+      res.on("data", c => data += c);
+      res.on("end", () => {
+        if (res.statusCode < 200 || res.statusCode >= 300)
+          return reject(new Error(`HTTP ${res.statusCode}: ${data.slice(0, 200)}`));
+        try { resolve(JSON.parse(data)); } catch { resolve(data); }
+      });
+      res.on("error", reject);
+    });
+    req.on("error", reject);
+    req.on("timeout", () => { req.destroy(); reject(new Error("请求超时")); });
+    req.write(buf);
+    req.end();
+  });
+}
+
 async function getEmbedding(text) {
   if (!SILICONCLOUD_API_KEY) throw new Error("SILICONCLOUD_API_KEY 未配置");
-  const response = await fetch(`${SILICONCLOUD_BASE_URL}/embeddings`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${SILICONCLOUD_API_KEY}`
-    },
-    body: JSON.stringify({ model: EMBEDDING_MODEL, input: text })
-  });
-  if (!response.ok) throw new Error(`Embedding API 错误: ${response.status}`);
-  const data = await response.json();
+  const data = await httpsPost(
+    `${SILICONCLOUD_BASE_URL}/embeddings`,
+    { "Content-Type": "application/json", "Authorization": `Bearer ${SILICONCLOUD_API_KEY}` },
+    JSON.stringify({ model: EMBEDDING_MODEL, input: text.substring(0, 8000) })
+  );
   return data.data[0].embedding;
 }
 
@@ -407,27 +428,22 @@ async function searchQdrant(embedding, topK) {
   const results = [];
   if (!QDRANT_URL || !QDRANT_API_KEY) return results;
   try {
-    const searchUrl = `${QDRANT_URL}/collections/gaokao_knowledge/points/search`;
     const isJWT = QDRANT_API_KEY.startsWith("eyJ");
-    const headers = { "Content-Type": "application/json" };
-    if (isJWT) headers["Authorization"] = `Bearer ${QDRANT_API_KEY}`;
-    else headers["api-key"] = QDRANT_API_KEY;
-
-    const response = await fetch(searchUrl, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ vector: embedding, limit: topK, with_payload: true })
-    });
-    if (response.ok) {
-      const data = await response.json();
-      for (const point of data.result || []) {
-        results.push({
-          category: "知识库（语义搜索）",
-          source: point.payload?.source || "未知",
-          score: point.score,
-          preview: point.payload?.content || ""
-        });
-      }
+    const authHeader = isJWT
+      ? { "Authorization": `Bearer ${QDRANT_API_KEY}` }
+      : { "api-key": QDRANT_API_KEY };
+    const data = await httpsPost(
+      `${QDRANT_URL}/collections/gaokao_knowledge/points/search`,
+      { "Content-Type": "application/json", ...authHeader },
+      JSON.stringify({ vector: embedding, limit: topK, with_payload: true })
+    );
+    for (const point of data.result || []) {
+      results.push({
+        category: "知识库（语义搜索）",
+        source: point.payload?.source || "未知",
+        score: point.score,
+        preview: point.payload?.content || ""
+      });
     }
   } catch (e) {
     console.error("Qdrant 搜索失败:", e.message);
