@@ -42,6 +42,37 @@ const MAJOR_DIR   = path.join(ROOT, "04_专业库");
 const STYLE_DIR   = path.join(ROOT, "05_张雪峰风格库");
 const CASE_DIR    = path.join(ROOT, "06_案例库");
 const SCORE_DB_PATH = path.join(ROOT, "07_录取数据", "gaokao_2025.db");
+const SCHOOL_TAGS_PATH = path.join(ROOT, "03_院校库", "学校标签库.json");
+
+// 加载学校标签库
+let schoolTags = {};
+try {
+  schoolTags = JSON.parse(fs.readFileSync(SCHOOL_TAGS_PATH, "utf-8"));
+  const count = Object.keys(schoolTags).filter(k => !k.startsWith("_")).length;
+  console.log(`✅ 学校标签库已加载: ${count} 所学校`);
+} catch (e) {
+  console.log("⚠️  学校标签库未找到，跳过");
+}
+
+// 从问题中提取学校名并返回标签信息
+function getSchoolTagContext(text) {
+  const found = [];
+  for (const [name, info] of Object.entries(schoolTags)) {
+    if (name.startsWith("_")) continue;
+    if (text.includes(name)) {
+      const tags = [];
+      if (info.is985) tags.push("985");
+      if (info.is211) tags.push("211");
+      if (info.双一流) tags.push(`双一流(${info.双一流})`);
+      if (info.软科排名) tags.push(`软科第${info.软科排名}`);
+      const aPlus = info.A+学科?.length > 0 ? `A+学科:${info.A+学科.slice(0,3).join("/")}` : "";
+      found.push(`【${name}】${tags.join(" | ")}${aPlus ? " | " + aPlus : ""}${info.特色 ? " | " + info.特色 : ""}`);
+    }
+  }
+  return found.length > 0
+    ? "\n\n【学校基本信息】\n" + found.join("\n")
+    : "";
+}
 
 const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂高考志愿、能说真话、站普通家庭立场、又会接住情绪的老师在回答问题。
 
@@ -608,8 +639,11 @@ const server = http.createServer(async (req, res) => {
 
       // 2. 组装上下文
       let context = "";
+      // 注入学校标签（985/211/双一流/A+学科）
+      const schoolTagCtx = getSchoolTagContext(message);
+      if (schoolTagCtx) context += schoolTagCtx;
       if (searchResults.length > 0) {
-        context = "\n\n以下是相关知识库内容供参考：\n\n";
+        context += "\n\n以下是相关知识库内容供参考：\n\n";
         for (const r of searchResults) {
           context += `[${r.category}] ${r.source}\n${r.preview}\n\n---\n\n`;
         }
