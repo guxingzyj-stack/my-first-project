@@ -138,32 +138,54 @@ function tryLoadDatabase() {
   }
 }
 
-async function downloadDatabase(url) {
+function downloadDatabase(url) {
   console.log(`⬇️  正在下载录取数据库: ${url}`);
   const dir = path.dirname(SCORE_DB_PATH);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-  const response = await fetch(url, { redirect: "follow" });
-  if (!response.ok) throw new Error(`下载失败: HTTP ${response.status}`);
+  return new Promise((resolve, reject) => {
+    const parsedUrl = new URL(url);
+    const mod = parsedUrl.protocol === "https:" ? https : require("http");
 
-  const total = parseInt(response.headers.get("content-length") || "0");
-  let received = 0;
-  const chunks = [];
-
-  const reader = response.body.getReader();
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    chunks.push(value);
-    received += value.length;
-    if (total > 0 && received % (10 * 1024 * 1024) < value.length) {
-      console.log(`   已下载 ${Math.round(received / 1024 / 1024)}MB / ${Math.round(total / 1024 / 1024)}MB`);
-    }
-  }
-
-  const buffer = Buffer.concat(chunks);
-  fs.writeFileSync(SCORE_DB_PATH, buffer);
-  console.log(`✅ 数据库下载完成 (${Math.round(buffer.length / 1024 / 1024)}MB)`);
+    const doRequest = (targetUrl) => {
+      const u = new URL(targetUrl);
+      const req = mod.request({
+        hostname: u.hostname, port: u.port || (u.protocol === "https:" ? 443 : 80),
+        path: u.pathname + u.search, method: "GET",
+        headers: { "User-Agent": "Mozilla/5.0" },
+        timeout: 300_000,
+      }, (res) => {
+        // 跟随重定向
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          return doRequest(res.headers.location);
+        }
+        if (res.statusCode !== 200) {
+          return reject(new Error(`下载失败: HTTP ${res.statusCode}`));
+        }
+        const total = parseInt(res.headers["content-length"] || "0");
+        let received = 0;
+        const chunks = [];
+        res.on("data", (chunk) => {
+          chunks.push(chunk);
+          received += chunk.length;
+          if (total > 0 && received % (10 * 1024 * 1024) < chunk.length) {
+            console.log(`   已下载 ${Math.round(received/1024/1024)}MB / ${Math.round(total/1024/1024)}MB`);
+          }
+        });
+        res.on("end", () => {
+          const buffer = Buffer.concat(chunks);
+          fs.writeFileSync(SCORE_DB_PATH, buffer);
+          console.log(`✅ 数据库下载完成 (${Math.round(buffer.length/1024/1024)}MB)`);
+          resolve();
+        });
+        res.on("error", reject);
+      });
+      req.on("error", reject);
+      req.on("timeout", () => { req.destroy(); reject(new Error("数据库下载超时")); });
+      req.end();
+    };
+    doRequest(url);
+  });
 }
 
 async function initDatabase() {

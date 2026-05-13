@@ -312,6 +312,15 @@
     .result-table tr:hover td { background: #faf8ff; }
     .score-highlight { color: #e74c3c; font-weight: 700; }
     .rank-text { color: #888; font-size: 12px; }
+    /* 冲稳保标签 */
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .tag-rush  { background: #fff3e0; color: #e65100; }
+    .tag-match { background: #e8f5e9; color: #2e7d32; }
+    .tag-safe  { background: #e3f2fd; color: #1565c0; }
+    .tag-low   { background: #fce4ec; color: #c62828; }
+    /* 我的分数输入 */
+    .my-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 20px 0; font-size: 13px; color: #555; }
+    .my-score-row input { width: 90px; padding: 5px 10px; border: 1.5px solid #e0d4ff; border-radius: 8px; font-size: 14px; text-align: center; }
     .query-empty {
       text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px;
     }
@@ -444,6 +453,12 @@
         <select class="filter-select" id="qBatch" style="max-width:140px"><option value="">选择批次</option></select>
         <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
       </div>
+      <div class="my-score-row">
+        <span>我的分数：</span>
+        <input type="number" id="qMyScore" placeholder="如 580" min="0" max="900"
+          oninput="syncMyScore()" title="填入后自动标注冲稳保">
+        <span style="color:#aaa;font-size:12px">填入后自动标注冲稳保</span>
+      </div>
     </div>
     <!-- 查询结果 -->
     <div class="query-results" id="queryResults">
@@ -481,6 +496,11 @@
         chatInputArea.style.display = 'none';
         tabData.classList.add('active');
         tabChat.classList.remove('active');
+        // 自动从考生信息面板同步分数和省份
+        const profileScore    = document.getElementById('scoreInput').value;
+        const profileProvince = document.getElementById('provinceSelect').value;
+        if (profileScore)    document.getElementById('qMyScore').value   = profileScore;
+        if (profileProvince) document.getElementById('qProvince').value  = profileProvince;
         loadQueryOptions();
       }
     }
@@ -553,17 +573,39 @@
       }
     }
 
-    function renderQueryResults({ total, page, pageSize, rows }) {
+    function calcTag(myScore, minScore) {
+      if (!myScore || !minScore) return '';
+      const diff = myScore - minScore;
+      if (diff < 0)   return '<span class="tag tag-low">偏低</span>';
+      if (diff <= 15) return '<span class="tag tag-rush">冲</span>';
+      if (diff <= 40) return '<span class="tag tag-match">稳</span>';
+      return '<span class="tag tag-safe">保</span>';
+    }
+
+    function syncMyScore() {
+      // 分数改变时重新渲染（如果当前有结果）
       const container = document.getElementById('queryResults');
+      if (container.dataset.lastResult) {
+        renderQueryResults(JSON.parse(container.dataset.lastResult));
+      }
+    }
+
+    function renderQueryResults(data) {
+      const { total, page, pageSize, rows } = data;
+      const container = document.getElementById('queryResults');
+      container.dataset.lastResult = JSON.stringify(data); // 缓存供分数变化时重渲染
       if (!rows || rows.length === 0) {
         container.innerHTML = '<div class="query-empty">暂无匹配数据，换个条件试试</div>';
         return;
       }
+      const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
       const totalPages = Math.ceil(total / pageSize);
-      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页</div>`;
+      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#7c3aed">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
-      html += '<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th></tr></thead><tbody>';
+      const showTag = myScore > 0;
+      html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}</tr></thead><tbody>`;
       for (const r of rows) {
+        const tag = showTag ? calcTag(myScore, r.min_score) : '';
         html += `<tr>
           <td style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
           <td style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
@@ -572,6 +614,7 @@
           <td style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
           <td><span class="score-highlight">${r.min_score||'-'}</span></td>
           <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
+          ${showTag ? `<td>${tag}</td>` : ''}
         </tr>`;
       }
       html += '</tbody></table></div>';
