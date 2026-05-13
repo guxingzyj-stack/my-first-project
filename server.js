@@ -65,13 +65,63 @@ function getSchoolTagContext(text) {
       if (info.is211) tags.push("211");
       if (info.双一流) tags.push(`双一流(${info.双一流})`);
       if (info.软科排名) tags.push(`软科第${info.软科排名}`);
-      const aPlus = info.A+学科?.length > 0 ? `A+学科:${info.A+学科.slice(0,3).join("/")}` : "";
+      const aPlusList = info["A+学科"];
+      const aPlus = aPlusList?.length > 0 ? `A+学科:${aPlusList.slice(0,3).join("/")}` : "";
       found.push(`【${name}】${tags.join(" | ")}${aPlus ? " | " + aPlus : ""}${info.特色 ? " | " + info.特色 : ""}`);
     }
   }
   return found.length > 0
     ? "\n\n【学校基本信息】\n" + found.join("\n")
     : "";
+}
+
+// 批次控制线文件路径
+const BATCH_LINES_PATH = path.join(ROOT, "01_政策规则", "全国_批次控制线汇总.md");
+let batchLinesContent = "";
+try {
+  batchLinesContent = fs.readFileSync(BATCH_LINES_PATH, "utf-8");
+  console.log(`✅ 批次控制线库已加载`);
+} catch (e) {
+  console.log("⚠️  批次控制线文件未找到，跳过");
+}
+
+// 从批次控制线文件中提取指定省份的历年数据
+function getBatchLinesContext(province) {
+  if (!batchLinesContent || !province) return "";
+  const lines = batchLinesContent.split("\n");
+  const result = [];
+  let inTable = false;
+  let tableHeader = "";
+  let sectionYear = "";
+
+  for (const line of lines) {
+    // 检测年份标题
+    const yearMatch = line.match(/^## (\d{4})年/);
+    if (yearMatch) {
+      sectionYear = yearMatch[1];
+      inTable = false;
+      tableHeader = "";
+      continue;
+    }
+    // 检测表头
+    if (line.startsWith("| 省份") || line.startsWith("|---")) {
+      inTable = true;
+      tableHeader = line;
+      continue;
+    }
+    // 检测省份数据行
+    if (inTable && line.includes(`| ${province} |`)) {
+      if (result.length === 0 || result[result.length-1] !== `\n**${sectionYear}年**`) {
+        result.push(`**${sectionYear}年**`);
+      }
+      result.push(line.trim());
+    }
+  }
+
+  if (result.length === 0) return "";
+  return `\n\n【${province}批次控制线（历年）】\n`
+    + `格式：物理类/历史类 本科控制线（★新高考=统一本科批线；老高考=一本控制线）\n`
+    + result.join("\n");
 }
 
 const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂高考志愿、能说真话、站普通家庭立场、又会接住情绪的老师在回答问题。
@@ -642,6 +692,9 @@ const server = http.createServer(async (req, res) => {
       // 注入学校标签（985/211/双一流/A+学科）
       const schoolTagCtx = getSchoolTagContext(message);
       if (schoolTagCtx) context += schoolTagCtx;
+      // 注入考生省份批次控制线（帮AI判断用户位次/批次归属）
+      const batchCtx = getBatchLinesContext(userProfile.province);
+      if (batchCtx) context += batchCtx;
       if (searchResults.length > 0) {
         context += "\n\n以下是相关知识库内容供参考：\n\n";
         for (const r of searchResults) {
