@@ -272,21 +272,21 @@ function downloadDatabase(url) {
 async function initDatabase() {
   if (!Database) return;
 
-  // 已存在则直接加载
-  if (fs.existsSync(SCORE_DB_PATH) && tryLoadDatabase()) return;
-
-  // 尝试从环境变量指定的 URL 下载
   const downloadUrl = process.env.DB_DOWNLOAD_URL;
+
+  // 如果设置了下载地址，优先下载最新版（覆盖旧文件）
   if (downloadUrl) {
     try {
       await downloadDatabase(downloadUrl);
-      tryLoadDatabase();
     } catch (e) {
-      console.error("❌ 数据库下载失败:", e.message);
+      console.error("⚠️  数据库下载失败:", e.message, "，尝试使用本地缓存");
     }
-  } else {
-    console.log("📊 录取数据库未找到（可设置 DB_DOWNLOAD_URL 环境变量自动下载）");
   }
+
+  // 加载数据库（下载的新文件或已有的旧文件）
+  if (fs.existsSync(SCORE_DB_PATH) && tryLoadDatabase()) return;
+
+  console.log("📊 录取数据库未找到（可设置 DB_DOWNLOAD_URL 环境变量自动下载）");
 }
 
 // 查询录取数据库
