@@ -731,14 +731,16 @@ const server = http.createServer(async (req, res) => {
 
       // 3. 构建消息（含历史 + 考生信息注入到系统提示）
       let sysPrompt = SYSTEM_PROMPT;
-      const { province, subject, score } = userProfile;
+      const { province, subject, score, rank, situation } = userProfile;
       if (province || score) {
         sysPrompt += "\n\n当前考生信息：";
         if (province) sysPrompt += `省份=${province}`;
         if (subject)  sysPrompt += `，科目=${subject}`;
         if (score)    sysPrompt += `，高考分数=${score}分`;
+        if (rank)     sysPrompt += `，位次=${rank}`;
         sysPrompt += "。回答时直接基于该考生情况分析，无需重复询问这些信息。";
       }
+      if (situation) sysPrompt += `\n考生补充情况：${situation}，请结合这些信息给出更有针对性的分析。`;
 
       const messages = [{ role: "system", content: sysPrompt }];
       // 加入最近 3 轮历史（6条消息），避免 token 过多
