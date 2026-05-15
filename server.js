@@ -3,10 +3,11 @@
  * 新增：SQLite 录取数据检索 / SSE 流式输出 / 对话历史支持
  */
 
-const fs = require("fs");
-const path = require("path");
-const http = require("http");
-const https = require("https");
+const fs     = require("fs");
+const path   = require("path");
+const http   = require("http");
+const https  = require("https");
+const crypto = require("crypto");
 const { URL } = require("url");
 
 
@@ -50,7 +51,24 @@ const SCORE_DB_PATH = (() => {
   return path.join(ROOT, "07_录取数据", "gaokao_2025.db");
 })();
 const SCHOOL_TAGS_PATH = path.join(ROOT, "03_院校库", "学校标签库.json");
+const CONV_DB_DIR  = path.join(ROOT, "data");
+const CONV_DB_PATH = path.join(CONV_DB_DIR, "conversations.db");
+const STATS_KEY    = process.env.STATS_KEY || "";
 const rateLimitMap = new Map();
+
+// 埋点数据库（启动时初始化）
+let convDb = null;
+
+// 生成唯一ID（Node 18+ 使用 randomUUID，降级用 hex）
+function generateId() {
+  return crypto.randomUUID ? crypto.randomUUID()
+    : crypto.randomBytes(16).toString("hex");
+}
+
+// IP哈希（sha256前16位，不可逆）
+function hashIp(ip) {
+  return crypto.createHash("sha256").update(ip).digest("hex").slice(0, 16);
+}
 
 // 加载学校标签库
 let schoolTags = {};
@@ -93,43 +111,33 @@ try {
   console.log("⚠️  批次控制线文件未找到，跳过");
 }
 
-// 从批次控制线文件中提取指定省份的历年数据
+// 从批次控制线文件中提取指定省份数据，只返回近2年，避免注入过多历史噪声
 function getBatchLinesContext(province) {
   if (!batchLinesContent || !province) return "";
   const lines = batchLinesContent.split("\n");
-  const result = [];
+  const byYear = {};   // year → [行...]
   let inTable = false;
-  let tableHeader = "";
   let sectionYear = "";
 
   for (const line of lines) {
-    // 检测年份标题
     const yearMatch = line.match(/^## (\d{4})年/);
-    if (yearMatch) {
-      sectionYear = yearMatch[1];
-      inTable = false;
-      tableHeader = "";
-      continue;
-    }
-    // 检测表头
-    if (line.startsWith("| 省份") || line.startsWith("|---")) {
-      inTable = true;
-      tableHeader = line;
-      continue;
-    }
-    // 检测省份数据行
+    if (yearMatch) { sectionYear = yearMatch[1]; inTable = false; continue; }
+    if (line.startsWith("| 省份") || line.startsWith("|---")) { inTable = true; continue; }
     if (inTable && line.includes(`| ${province} |`)) {
-      if (result.length === 0 || result[result.length-1] !== `\n**${sectionYear}年**`) {
-        result.push(`**${sectionYear}年**`);
-      }
-      result.push(line.trim());
+      if (!byYear[sectionYear]) byYear[sectionYear] = [];
+      byYear[sectionYear].push(line.trim());
     }
   }
 
-  if (result.length === 0) return "";
-  return `\n\n【${province}批次控制线（历年）】\n`
+  // 只取最近2年
+  const years = Object.keys(byYear).sort((a, b) => parseInt(b) - parseInt(a)).slice(0, 2);
+  if (years.length === 0) return "";
+
+  const parts = years.map(yr => `**${yr}年**\n${byYear[yr].join("\n")}`);
+  return `\n\n【${province}批次控制线（近2年）】\n`
     + `格式：物理类/历史类 本科控制线（★新高考=统一本科批线；老高考=一本控制线）\n`
-    + result.join("\n");
+    + `⚠️ 数据按年份分组，请严格区分，不要混用\n\n`
+    + parts.join("\n\n");
 }
 
 const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂高考志愿、能说真话、站普通家庭立场、又会接住情绪的老师在回答问题。
@@ -174,8 +182,150 @@ const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂
    - 用户说"家里希望考编/考公"→优先师范、政法、财经类
    - 用户说"学费敏感"→优先公办，避免推中外合作
 4. **每所学校必须说一句"为什么适合你"**：不要只列学校名，要说明匹配理由
-5. **如果候选数据不足以覆盖某档**：明确说"知识库中XX档数据较少，建议自行查询XX官网补充"，不要编造`;
+5. **如果候选数据不足以覆盖某档**：明确说"知识库中XX档数据较少，建议自行查询XX官网补充"，不要编造
 
+## 数据引用纪律（公益项目核心准则，违反即重大事故）
+1. 引用任何分数/位次/批次线，必须明确说出年份，不允许"近几年""最近"这种模糊词
+2. 不同省份的数据绝对不能混用。如果上下文里有多省数据，只用用户所在省的
+3. 如果数据缺失或只有老数据，必须明确告知用户"当前可参考数据较少/较旧"，建议去阳光高考/省考试院核实
+4. 不要补全你不知道的数据。比如不知道某学校2025年录取分，就说"2025年数据暂缺"，绝不能用2024年数据冒充2025年`;
+
+
+// ==================== 危机识别 ====================
+
+// 检测用户消息是否包含心理危机信号，任一命中返回 true
+function detectCrisis(text) {
+  // 自伤/自杀类关键词（直接命中，无需上下文）
+  const directSignals = [
+    "不想活", "想死", "自杀", "跳楼", "结束生命",
+    "活不下去", "坚持不住", "不想坚持",
+  ];
+  // "没意义/没意思/解脱/吃药"需结合生命/存在上下文，避免"专业没意思"误判
+  const lifeWords = ["活", "人生", "生命", "存在", "这辈子"];
+  const softSignals = ["没意义", "没意思", "解脱", "吃药"];
+  for (const s of softSignals) {
+    if (text.includes(s)) {
+      for (const lw of lifeWords) {
+        if (text.includes(lw)) return true;
+      }
+    }
+  }
+  for (const kw of directSignals) {
+    if (text.includes(kw)) return true;
+  }
+  // 家庭暴力信号
+  const violenceSignals = ["我爸打我", "我妈打我", "家里待不下去", "不敢回家", "被打"];
+  for (const kw of violenceSignals) {
+    if (text.includes(kw)) return true;
+  }
+  // 极度绝望（需同句出现考试/前途相关词，避免误判日常用语）
+  const despairWords  = ["完蛋了", "废了", "没希望了"];
+  const contextWords  = ["考", "分数", "前途", "高考", "成绩", "志愿"];
+  for (const d of despairWords) {
+    if (text.includes(d)) {
+      for (const c of contextWords) {
+        if (text.includes(c)) return true;
+      }
+    }
+  }
+  return false;
+}
+
+// 启动自测（失败只打日志，不阻断服务启动）
+function testCrisisDetection() {
+  const cases = [
+    ["我不想活了",           true],
+    ["考砸了不想活",         true],
+    ["我想自杀",             true],
+    ["我爸打我",             true],
+    ["活不下去了",           true],
+    ["高考完蛋了没希望了",   true],
+    ["分数出来废了",         true],
+    ["我考砸了想复读",       false],
+    ["这个专业没意思",       false],
+    ["学习没动力",           false],
+    ["高考志愿怎么填",       false],
+    ["我想去北京大学",       false],
+  ];
+  let pass = 0, fail = 0;
+  for (const [input, expected] of cases) {
+    const result = detectCrisis(input);
+    if (result === expected) { pass++; }
+    else {
+      console.error(`❌ 危机检测失败: "${input}" → 期望${expected}, 实际${result}`);
+      fail++;
+    }
+  }
+  if (fail === 0) console.log(`✅ 危机识别自测通过 (${pass}/${cases.length})`);
+  else console.error(`⚠️  危机识别自测: ${pass}通过, ${fail}失败`);
+}
+
+// 危机场景下注入到 sysPrompt 最前的强约束段
+const CRISIS_PROMPT = `用户当前可能处于心理危机状态。你的回答必须遵守：
+1. 第一句话必须共情接住情绪，不评价、不急着讲志愿
+2. 不使用任何激将法、批评、嘲讽、"你应该"句式
+3. 不承诺"一切都会好的""没事的"这种空话
+4. 回答末尾必须附上下方求助渠道（原文不改）：
+
+━━━━━━━━━━━━━━━━━━━━━
+🆘 你不是一个人，请联系：
+北京心理危机研究与干预中心：010-82951332
+希望24热线：400-161-9995
+抑郁援助热线：400-995-0008
+━━━━━━━━━━━━━━━━━━━━━
+
+`;
+
+// ==================== 埋点数据库 ====================
+
+function initConversationsDb() {
+  if (!Database) return;
+  try {
+    if (!fs.existsSync(CONV_DB_DIR)) fs.mkdirSync(CONV_DB_DIR, { recursive: true });
+    convDb = new Database(CONV_DB_PATH);
+    convDb.exec(`
+      CREATE TABLE IF NOT EXISTS conversations (
+        id TEXT PRIMARY KEY,
+        ip_hash TEXT,
+        province TEXT,
+        subject TEXT,
+        score INTEGER,
+        has_crisis_signal INTEGER DEFAULT 0,
+        created_at INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY,
+        conversation_id TEXT,
+        role TEXT,
+        content TEXT,
+        parent_message_id TEXT,
+        latency_ms INTEGER,
+        prompt_version TEXT DEFAULT 'v1.0',
+        is_crisis_response INTEGER DEFAULT 0,
+        created_at INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS retrieved_chunks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_id TEXT,
+        source TEXT,
+        category TEXT,
+        score REAL,
+        rank INTEGER,
+        created_at INTEGER
+      );
+      CREATE TABLE IF NOT EXISTS feedback (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        message_id TEXT,
+        feedback_type TEXT,
+        implicit INTEGER DEFAULT 0,
+        created_at INTEGER
+      );
+    `);
+    console.log("✅ 埋点数据库已初始化:", CONV_DB_PATH);
+  } catch (e) {
+    console.error("⚠️  埋点数据库初始化失败:", e.message);
+  }
+}
 
 // ==================== SQLite 数据库 ====================
 
@@ -317,29 +467,34 @@ function searchAdmissionDB(query, userProfile = {}) {
   if (!db || !dbSchema) return [];
   const { tableName, colMap } = dbSchema;
   const { province, score, subject } = userProfile;
+  const curYear = new Date().getFullYear();
 
   try {
     const conditions = [];
     const params = {};
 
-    // 省份过滤
+    // 省份：强匹配（= 不是 LIKE），无省份直接返回空，拒绝返回全国混合数据
     const provinceVal = province || extractProvince(query);
     if (provinceVal && colMap.province) {
-      conditions.push(`"${colMap.province}" LIKE @province`);
-      params.province = `%${provinceVal}%`;
+      conditions.push(`"${colMap.province}" = @province`);
+      params.province = provinceVal;
+    } else {
+      return []; // 没有省份信息，不查询
     }
 
-    // 分数区间过滤（±30分）
-    const scoreVal = score ? parseInt(score) : extractScore(query);
-    if (scoreVal > 0 && colMap.minScore) {
-      conditions.push(`CAST("${colMap.minScore}" AS INTEGER) BETWEEN @scoreMin AND @scoreMax`);
-      params.scoreMin = scoreVal - 30;
-      params.scoreMax = scoreVal + 30;
+    // 年份：query里提了就精确过滤，否则只取近2年
+    const yearVal = extractYear(query);
+    if (yearVal && colMap.year) {
+      conditions.push(`"${colMap.year}" = @year`);
+      params.year = yearVal;
+    } else if (colMap.year) {
+      conditions.push(`"${colMap.year}" >= @yearMin`);
+      params.yearMin = curYear - 1;
     }
 
     // 科目过滤（理科=物理类，文科=历史类，兼容新旧高考）
     const rawSubject = subject || extractSubject(query);
-    const subjectNorm = extractSubject(rawSubject + query); // 归一化为 "理"/"文"
+    const subjectNorm = extractSubject(rawSubject + query);
     if (subjectNorm && colMap.subject) {
       if (subjectNorm === "理") {
         conditions.push(`("${colMap.subject}" LIKE '%理科%' OR "${colMap.subject}" LIKE '%物理%')`);
@@ -348,36 +503,46 @@ function searchAdmissionDB(query, userProfile = {}) {
       }
     }
 
-    // 学校/专业关键词匹配（仅在没有省份+分数过滤时使用，避免误匹配泛化词）
-    const hasScoreFilter = scoreVal > 0 && colMap.minScore;
-    const hasProvinceFilter = provinceVal && colMap.province;
-    if (!hasScoreFilter && !hasProvinceFilter) {
-      const keywords = extractKeywords(query);
-      if (keywords.length > 0) {
-        const kwConds = [];
-        keywords.forEach((kw, i) => {
-          const key = `kw${i}`;
-          params[key] = `%${kw}%`;
-          if (colMap.school) kwConds.push(`"${colMap.school}" LIKE @${key}`);
-          if (colMap.major)  kwConds.push(`"${colMap.major}" LIKE @${key}`);
-        });
-        if (kwConds.length) conditions.push(`(${kwConds.join(" OR ")})`);
-      }
+    const orderBy = colMap.year ? `ORDER BY "${colMap.year}" DESC` : "";
+
+    // 分数过滤：先尝试 ±15，不足5条扩到 ±25
+    const scoreVal = score ? parseInt(score) : extractScore(query);
+    if (scoreVal > 0 && colMap.minScore) {
+      const scoreConds = [...conditions,
+        `CAST("${colMap.minScore}" AS INTEGER) BETWEEN @scoreMin AND @scoreMax`];
+      const tryScore = (delta) => {
+        const p = { ...params, scoreMin: scoreVal - delta, scoreMax: scoreVal + delta };
+        return db.prepare(
+          `SELECT * FROM "${tableName}" WHERE ${scoreConds.join(" AND ")} ${orderBy} LIMIT 80`
+        ).all(p);
+      };
+      let rows = tryScore(15);
+      if (rows.length < 5) rows = tryScore(25);
+      if (!rows.length) return [];
+      return [{ category: "录取数据库", source: "gaokao_2025.db", score: 1.0,
+        preview: formatDbRows(rows, colMap) }];
     }
 
-    if (conditions.length === 0) return [];
+    // 无分数：学校/专业关键词匹配（必须同时有省份，否则上面已返回空）
+    const keywords = extractKeywords(query);
+    if (keywords.length > 0) {
+      const kwConds = [];
+      keywords.forEach((kw, i) => {
+        const key = `kw${i}`;
+        params[key] = `%${kw}%`;
+        if (colMap.school) kwConds.push(`"${colMap.school}" LIKE @${key}`);
+        if (colMap.major)  kwConds.push(`"${colMap.major}" LIKE @${key}`);
+      });
+      if (kwConds.length) conditions.push(`(${kwConds.join(" OR ")})`);
+    } else {
+      return []; // 只有省份没有其他过滤条件，不拉全省数据
+    }
 
-    const orderBy = colMap.year ? `ORDER BY "${colMap.year}" DESC` : "";
-    const sql = `SELECT * FROM "${tableName}" WHERE ${conditions.join(" AND ")} ${orderBy} LIMIT 80`;
+    const sql  = `SELECT * FROM "${tableName}" WHERE ${conditions.join(" AND ")} ${orderBy} LIMIT 80`;
     const rows = db.prepare(sql).all(params);
     if (!rows.length) return [];
-
-    return [{
-      category: "录取数据库",
-      source: "gaokao_2025.db",
-      score: 1.0,
-      preview: formatDbRows(rows, colMap)
-    }];
+    return [{ category: "录取数据库", source: "gaokao_2025.db", score: 1.0,
+      preview: formatDbRows(rows, colMap) }];
   } catch (e) {
     console.error("数据库查询失败:", e.message);
     return [];
@@ -420,6 +585,15 @@ function extractSubject(text) {
   if (/理科|物理类/.test(text)) return "理";
   if (/文科|历史类/.test(text)) return "文";
   return "";
+}
+
+// 从文本中提取具体年份（今年/去年/4位数字）
+function extractYear(text) {
+  const cur = new Date().getFullYear();
+  if (text.includes("今年")) return cur;
+  if (text.includes("去年")) return cur - 1;
+  const m = text.match(/\b(20\d{2})\b/);
+  return m ? parseInt(m[1]) : null;
 }
 
 // 停用词：不应被识别为学校/专业名的词
@@ -599,25 +773,22 @@ async function searchKnowledgeBase(query, userProfile = {}, topK = 8) {
 async function searchMarkdownFiles(dir, query, category) {
   const results = [];
   const keywords = query.toLowerCase().split(/\s+/);
-  try {
-    for (const file of walkMarkdownFiles(dir)) {
-      try {
-        const content = fs.readFileSync(file, "utf-8");
-        const lower = content.toLowerCase();
-        let matchCount = 0;
-        for (const kw of keywords) { if (lower.includes(kw)) matchCount++; }
-        if (matchCount > 0) {
-          results.push({
-            category,
-            source: path.relative(ROOT, file),
-            score: matchCount / keywords.length,
-            preview: extractPreview(content, keywords[0])
-          });
-        }
-      } catch {}
-    }
-  } catch (e) {
-    console.error(`搜索目录失败: ${dir}`, e.message);
+  // walkMarkdownFiles 内部已有 try/catch，不会抛出，无需外层包裹
+  for (const file of walkMarkdownFiles(dir)) {
+    try {
+      const content = fs.readFileSync(file, "utf-8");
+      const lower = content.toLowerCase();
+      let matchCount = 0;
+      for (const kw of keywords) { if (lower.includes(kw)) matchCount++; }
+      if (matchCount > 0) {
+        results.push({
+          category,
+          source: path.relative(ROOT, file),
+          score: matchCount / keywords.length,
+          preview: extractPreview(content, keywords[0])
+        });
+      }
+    } catch {}
   }
   return results;
 }
@@ -699,6 +870,13 @@ const server = http.createServer(async (req, res) => {
         return;
       }
 
+      // 危机检测 + 埋点变量
+      const isCrisis   = detectCrisis(message);
+      const convId     = generateId();
+      const userMsgId  = generateId();
+      const asstMsgId  = generateId();
+      const reqStart   = Date.now();
+
       // SSE 响应头
       res.writeHead(200, {
         "Content-Type": "text/event-stream; charset=utf-8",
@@ -717,6 +895,21 @@ const server = http.createServer(async (req, res) => {
         try { res.write(": ping\n\n"); } catch {}
       }, 5000);
 
+      // 写入 conversation + user message（失败只打日志）
+      try {
+        if (convDb) {
+          convDb.prepare(
+            `INSERT INTO conversations (id,ip_hash,province,subject,score,has_crisis_signal,created_at)
+             VALUES (?,?,?,?,?,?,?)`
+          ).run(convId, hashIp(_ip),
+            userProfile.province || "", userProfile.subject || "",
+            parseInt(userProfile.score) || null, isCrisis ? 1 : 0, reqStart);
+          convDb.prepare(
+            `INSERT INTO messages (id,conversation_id,role,content,created_at) VALUES (?,?,?,?,?)`
+          ).run(userMsgId, convId, "user", message, reqStart);
+        }
+      } catch(e) { console.error("埋点写入失败:", e.message); }
+
       // 1. 检索知识库
       const searchResults = await searchKnowledgeBase(message, userProfile);
       emit({
@@ -728,6 +921,18 @@ const server = http.createServer(async (req, res) => {
           preview:  r.category === "录取数据库" ? r.preview : undefined
         }))
       });
+
+      // 写入 retrieved_chunks（失败只打日志）
+      try {
+        if (convDb) {
+          const stmt = convDb.prepare(
+            `INSERT INTO retrieved_chunks (message_id,source,category,score,rank,created_at)
+             VALUES (?,?,?,?,?,?)`
+          );
+          searchResults.forEach((r, idx) =>
+            stmt.run(asstMsgId, r.source, r.category, r.score, idx + 1, Date.now()));
+        }
+      } catch(e) { console.error("埋点写入失败:", e.message); }
 
       // 2. 组装上下文
       let context = "";
@@ -745,7 +950,8 @@ const server = http.createServer(async (req, res) => {
       }
 
       // 3. 构建消息（含历史 + 考生信息注入到系统提示）
-      let sysPrompt = SYSTEM_PROMPT;
+      // 危机场景：在最前面注入强约束段，优先级高于其他提示
+      let sysPrompt = isCrisis ? CRISIS_PROMPT + SYSTEM_PROMPT : SYSTEM_PROMPT;
       const { province, subject, score, rank, situation } = userProfile;
       if (province || score) {
         sysPrompt += "\n\n当前考生信息：";
@@ -764,12 +970,25 @@ const server = http.createServer(async (req, res) => {
       }
       messages.push({ role: "user", content: context + "用户问题：" + message });
 
-      // 4. 流式调用 LLM
+      // 4. 流式调用 LLM，同时在服务端累积完整回复用于埋点
+      let replyText = "";
       try {
         await callLLMStream(messages, (chunk) => {
+          replyText += chunk;
           emit({ type: "delta", content: chunk });
         });
-        emit({ type: "done" });
+        // 写入 assistant message（失败只打日志）
+        try {
+          if (convDb) {
+            convDb.prepare(
+              `INSERT INTO messages
+               (id,conversation_id,role,content,parent_message_id,latency_ms,is_crisis_response,created_at)
+               VALUES (?,?,?,?,?,?,?,?)`
+            ).run(asstMsgId, convId, "assistant", replyText,
+              userMsgId, Date.now() - reqStart, isCrisis ? 1 : 0, Date.now());
+          }
+        } catch(e) { console.error("埋点写入失败:", e.message); }
+        emit({ type: "done", message_id: asstMsgId });
       } finally {
         clearInterval(heartbeat);
       }
@@ -854,6 +1073,87 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 用户反馈接口
+  if (pathname === "/api/feedback" && req.method === "POST") {
+    try {
+      let body = "";
+      for await (const chunk of req) body += chunk;
+      const { message_id, feedback_type, implicit = false } = JSON.parse(body);
+      if (!message_id || !feedback_type) {
+        res.writeHead(400, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "missing fields" })); return;
+      }
+      try {
+        if (convDb) {
+          convDb.prepare(
+            `INSERT INTO feedback (message_id,feedback_type,implicit,created_at) VALUES (?,?,?,?)`
+          ).run(message_id, feedback_type, implicit ? 1 : 0, Date.now());
+        }
+      } catch(e) { console.error("feedback写入失败:", e.message); }
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ ok: true }));
+    } catch(e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "server error" }));
+    }
+    return;
+  }
+
+  // 简易运营看板（需 STATS_KEY 鉴权）
+  if (pathname === "/api/stats" && req.method === "GET") {
+    const key = url.searchParams.get("key") || "";
+    if (!STATS_KEY || key !== STATS_KEY) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" })); return;
+    }
+    if (!convDb) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "stats db not available" })); return;
+    }
+    try {
+      const todayStart = new Date(); todayStart.setHours(0, 0, 0, 0);
+      const ts = todayStart.getTime();
+      const today = {
+        conversations:  convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE created_at>=?").get(ts).c,
+        messages:       convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=?").get(ts).c,
+        crisis_signals: convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE has_crisis_signal=1 AND created_at>=?").get(ts).c,
+      };
+      const last_7_days = [];
+      for (let i = 6; i >= 0; i--) {
+        const d  = new Date(); d.setDate(d.getDate() - i);  d.setHours(0,0,0,0);
+        const d2 = new Date(d); d2.setDate(d2.getDate() + 1);
+        const t1 = d.getTime(), t2 = d2.getTime();
+        last_7_days.push({
+          date:           d.toISOString().slice(0, 10),
+          conversations:  convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE created_at>=? AND created_at<?").get(t1,t2).c,
+          messages:       convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=? AND created_at<?").get(t1,t2).c,
+          crisis_signals: convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE has_crisis_signal=1 AND created_at>=? AND created_at<?").get(t1,t2).c,
+        });
+      }
+      const feedback_stats = {
+        thumbs_up:   convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_up'").get().c,
+        thumbs_down: convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_down'").get().c,
+        copy:        convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='copy'").get().c,
+      };
+      const avgRow = convDb.prepare("SELECT AVG(latency_ms) as avg FROM messages WHERE role='assistant' AND latency_ms IS NOT NULL").get();
+      const top_bad_questions = convDb.prepare(`
+        SELECT mu.content, COUNT(*) as cnt
+        FROM feedback f
+        JOIN messages ma ON f.message_id = ma.id
+        JOIN messages mu ON mu.conversation_id = ma.conversation_id AND mu.role='user'
+        WHERE f.feedback_type='thumbs_down'
+        GROUP BY mu.content ORDER BY cnt DESC LIMIT 10
+      `).all();
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ today, last_7_days, feedback_stats,
+        avg_latency_ms: Math.round(avgRow.avg || 0), top_bad_questions }));
+    } catch(e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
   // 配置信息
   if (pathname === "/api/config") {
     res.writeHead(200, { "Content-Type": "application/json" });
@@ -903,6 +1203,8 @@ const server = http.createServer(async (req, res) => {
 
 // 启动
 initDatabase().then(() => {
+  initConversationsDb();
+  testCrisisDetection();
   server.listen(PORT, HOST, () => {
   console.log("=".repeat(50));
   console.log("🎓 高考志愿咨询系统已启动（增强版）");
