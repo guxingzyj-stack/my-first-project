@@ -481,12 +481,22 @@ async function initDatabase() {
 
   const downloadUrl = process.env.DB_DOWNLOAD_URL;
 
-  // 如果设置了下载地址，优先下载最新版（覆盖旧文件）
+  // 如果设置了下载地址，先检查 Volume 里是否已有完整文件（≥250MB）
   if (downloadUrl) {
-    try {
-      await downloadDatabase(downloadUrl);
-    } catch (e) {
-      console.error("⚠️  数据库下载失败:", e.message, "，尝试使用本地缓存");
+    let skipDownload = false;
+    if (fs.existsSync(SCORE_DB_PATH)) {
+      const sizeMB = fs.statSync(SCORE_DB_PATH).size / (1024 * 1024);
+      if (sizeMB >= 250) {
+        console.log(`✅ 录取数据库已存在，跳过下载 (${Math.round(sizeMB)}MB)`);
+        skipDownload = true;
+      }
+    }
+    if (!skipDownload) {
+      try {
+        await downloadDatabase(downloadUrl);
+      } catch (e) {
+        console.error("⚠️  数据库下载失败:", e.message, "，尝试使用本地缓存");
+      }
     }
   }
 
