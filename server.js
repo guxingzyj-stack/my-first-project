@@ -41,8 +41,16 @@ const SCHOOL_DIR  = path.join(ROOT, "03_院校库");
 const MAJOR_DIR   = path.join(ROOT, "04_专业库");
 const STYLE_DIR   = path.join(ROOT, "05_张雪峰风格库");
 const CASE_DIR    = path.join(ROOT, "06_案例库");
-const SCORE_DB_PATH = path.join(ROOT, "07_录取数据", "gaokao_2025.db");
+const SCORE_DB_PATH = (() => {
+  const dir = path.join(ROOT, "07_录取数据");
+  try {
+    const files = fs.readdirSync(dir).filter(f => f.endsWith(".db")).sort();
+    if (files.length > 0) return path.join(dir, files[files.length - 1]);
+  } catch {}
+  return path.join(ROOT, "07_录取数据", "gaokao_2025.db");
+})();
 const SCHOOL_TAGS_PATH = path.join(ROOT, "03_院校库", "学校标签库.json");
+const rateLimitMap = new Map();
 
 // 加载学校标签库
 let schoolTags = {};
@@ -404,6 +412,11 @@ const KEYWORD_STOPWORDS = new Set(["哪些大学","什么大学","哪所大学",
 
 function extractKeywords(text) {
   const words = [];
+  // 优先从学校标签库匹配（支持短校名，如"清华""浙大"）
+  for (const name of Object.keys(schoolTags)) {
+    if (name.startsWith("_")) continue;
+    if (text.includes(name)) words.push(name);
+  }
   const schoolMatch = text.match(/[一-龥]{2,8}(大学|学院)/g);
   if (schoolMatch) words.push(...schoolMatch.filter(w => !KEYWORD_STOPWORDS.has(w) && w.length >= 4));
   const majorMatch = text.match(/[一-龥]{2,6}(工程|医学|师范|财经|法学|艺术)/g);
@@ -646,6 +659,20 @@ const server = http.createServer(async (req, res) => {
 
   // 聊天接口（SSE 流式输出）
   if (pathname === "/api/chat" && req.method === "POST") {
+    // IP 限流（60秒窗口，同IP最多10次请求）
+    const _ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "unknown";
+    const _now = Date.now();
+    const _rl = rateLimitMap.get(_ip) || { count: 0, start: _now };
+    if (_now - _rl.start > 60_000) { _rl.count = 0; _rl.start = _now; }
+    _rl.count++;
+    rateLimitMap.set(_ip, _rl);
+    if (_rl.count > 10) {
+      const waitSec = Math.ceil((60_000 - (_now - _rl.start)) / 1000);
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "请求过于频繁，请稍后重试", waitSeconds: waitSec }));
+      return;
+    }
+    let heartbeat = null;
     try {
       let body = "";
       for await (const chunk of req) body += chunk;
@@ -671,7 +698,7 @@ const server = http.createServer(async (req, res) => {
       };
 
       // 心跳：每 5 秒发一次注释行，防止代理/CDN 因空闲超时断开 SSE 连接
-      const heartbeat = setInterval(() => {
+      heartbeat = setInterval(() => {
         try { res.write(": ping\n\n"); } catch {}
       }, 5000);
 
@@ -750,10 +777,11 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "数据库未加载" })); return;
     }
     try {
-      const provinces = db.prepare("SELECT DISTINCT province FROM major_scores WHERE province IS NOT NULL ORDER BY province").all().map(r => r.province);
-      const years     = db.prepare("SELECT DISTINCT year FROM major_scores WHERE year IS NOT NULL ORDER BY year DESC").all().map(r => r.year);
-      const batches   = db.prepare("SELECT DISTINCT batch FROM major_scores WHERE batch IS NOT NULL ORDER BY batch").all().map(r => r.batch);
-      const subjects  = db.prepare("SELECT DISTINCT subject FROM major_scores WHERE subject IS NOT NULL ORDER BY subject").all().map(r => r.subject);
+      const tbl = dbSchema?.tableName || "major_scores";
+      const provinces = db.prepare(`SELECT DISTINCT province FROM "${tbl}" WHERE province IS NOT NULL ORDER BY province`).all().map(r => r.province);
+      const years     = db.prepare(`SELECT DISTINCT year FROM "${tbl}" WHERE year IS NOT NULL ORDER BY year DESC`).all().map(r => r.year);
+      const batches   = db.prepare(`SELECT DISTINCT batch FROM "${tbl}" WHERE batch IS NOT NULL ORDER BY batch`).all().map(r => r.batch);
+      const subjects  = db.prepare(`SELECT DISTINCT subject FROM "${tbl}" WHERE subject IS NOT NULL ORDER BY subject`).all().map(r => r.subject);
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ provinces, years, batches, subjects }));
     } catch (e) {
