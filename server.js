@@ -30,7 +30,7 @@ const PORT = process.env.PORT || 3000;
 const HOST = "0.0.0.0";
 const SILICONCLOUD_API_KEY = process.env.SILICONCLOUD_API_KEY || "";
 const SILICONCLOUD_BASE_URL = process.env.SILICONCLOUD_BASE_URL || "https://api.siliconflow.cn/v1";
-const LLM_MODEL = process.env.LLM_MODEL || "deepseek-ai/DeepSeek-V2.5";
+const LLM_MODEL = process.env.LLM_MODEL || "deepseek-ai/DeepSeek-V3.2";
 const EMBEDDING_MODEL = process.env.EMBEDDING_MODEL || "BAAI/bge-m3";
 const QDRANT_URL = process.env.QDRANT_URL || "";
 const QDRANT_API_KEY = process.env.QDRANT_API_KEY || "";
@@ -55,6 +55,65 @@ const CONV_DB_DIR  = path.join(ROOT, "data");
 const CONV_DB_PATH = path.join(CONV_DB_DIR, "conversations.db");
 const STATS_KEY    = process.env.STATS_KEY || "";
 const rateLimitMap = new Map();
+
+// ==================== 运营看板 HTML ====================
+const ADMIN_HTML = `<!DOCTYPE html>
+<html lang="zh"><head>
+<meta charset="UTF-8"><title>运营看板</title>
+<style>
+body{font-family:system-ui,sans-serif;margin:0;padding:24px;background:#f5f5f5;color:#333}
+h1{margin:0 0 20px;font-size:20px}h2{font-size:14px;margin:20px 0 8px;color:#555}
+.cards{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:4px}
+.card{background:#fff;border-radius:8px;padding:16px 20px;min-width:110px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.v{font-size:28px;font-weight:700;color:#2563eb}.v.red{color:#dc2626}.lbl{font-size:12px;color:#888;margin-top:2px}
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:8px;overflow:hidden;
+  box-shadow:0 1px 3px rgba(0,0,0,.08);margin-bottom:4px}
+th{background:#f0f0f0;text-align:left;padding:8px 12px;font-size:12px}
+td{padding:8px 12px;border-top:1px solid #eee;font-size:13px}
+</style></head>
+<body><h1>🎓 高考志愿咨询 · 运营看板</h1>
+<div id="app">加载中...</div>
+<script>
+(async function(){
+  const KEY = new URLSearchParams(window.location.search).get('key');
+  if (!KEY) { document.getElementById('app').innerHTML='<p style="color:red">缺少 key 参数，访问 /admin?key=YOUR_KEY</p>'; return; }
+  let d;
+  try { d = await fetch('/api/stats?key='+KEY).then(r=>r.json()); }
+  catch(e) { document.getElementById('app').innerHTML='<p style="color:red">加载失败: '+e.message+'</p>'; return; }
+  if (d.error) { document.getElementById('app').innerHTML='<p style="color:red">错误: '+d.error+'</p>'; return; }
+
+  const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const card = (v,lbl,cls) => '<div class=card><div class="v'+(cls?' '+cls:'')+'">'+(v??'-')+'</div><div class=lbl>'+lbl+'</div></div>';
+
+  let h='';
+  h+='<h2>今日概览</h2><div class=cards>';
+  h+=card(d.today.conversations,'对话数');
+  h+=card(d.today.user_messages,'用户消息');
+  h+=card(d.today.ai_responses,'AI 回复');
+  h+=card(d.today.crisis_signals,'🆘 危机信号',d.today.crisis_signals>0?'red':'');
+  h+=card(Math.round(d.avg_latency_ms/1000)+'s','平均延迟');
+  h+='</div>';
+
+  h+='<h2>累计反馈（测试数据已过滤）</h2><div class=cards>';
+  h+=card(d.feedback_stats.thumbs_up,'👍 有帮助');
+  h+=card(d.feedback_stats.thumbs_down,'👎 没帮助');
+  h+=card(d.feedback_stats.copy,'📋 复制');
+  h+='</div>';
+
+  h+='<h2>近 7 天</h2><table><tr><th>日期</th><th>对话</th><th>用户消息</th><th>AI回复</th><th>危机</th></tr>';
+  for(const day of d.last_7_days)
+    h+='<tr><td>'+day.date+'</td><td>'+day.conversations+'</td><td>'+day.user_messages+'</td><td>'+day.ai_responses+'</td>'
+      +'<td'+(day.crisis_signals>0?' style="color:#dc2626"':'')+'>'+day.crisis_signals+'</td></tr>';
+  h+='</table>';
+
+  h+='<h2>👎 差评最多的问题</h2><table><tr><th>#</th><th>问题</th><th>次数</th></tr>';
+  if(!d.top_bad_questions.length) h+='<tr><td colspan=3 style="color:#aaa;text-align:center">暂无数据</td></tr>';
+  else d.top_bad_questions.forEach((q,i)=>{ h+='<tr><td>'+(i+1)+'</td><td>'+esc(q.content)+'</td><td>'+q.cnt+'</td></tr>'; });
+  h+='</table>';
+
+  document.getElementById('app').innerHTML=h;
+})();
+<\/script></body></html>`;
 
 // 埋点数据库（启动时初始化）
 let convDb = null;
@@ -332,9 +391,12 @@ function initConversationsDb() {
         message_id TEXT,
         feedback_type TEXT,
         implicit INTEGER DEFAULT 0,
+        is_test INTEGER DEFAULT 0,
         created_at INTEGER
       );
     `);
+    // 兼容旧库：若 is_test 列不存在则补加（安全幂等）
+    try { convDb.exec(`ALTER TABLE feedback ADD COLUMN is_test INTEGER DEFAULT 0`); } catch {}
     console.log("✅ 埋点数据库已初始化:", CONV_DB_PATH);
   } catch (e) {
     console.error("⚠️  埋点数据库初始化失败:", e.message);
@@ -1122,7 +1184,7 @@ const server = http.createServer(async (req, res) => {
     try {
       let body = "";
       for await (const chunk of req) body += chunk;
-      const { message_id, feedback_type, implicit = false } = JSON.parse(body);
+      const { message_id, feedback_type, implicit = false, test_mode = false } = JSON.parse(body);
       if (!message_id || !feedback_type) {
         res.writeHead(400, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ error: "missing fields" })); return;
@@ -1130,8 +1192,8 @@ const server = http.createServer(async (req, res) => {
       try {
         if (convDb) {
           convDb.prepare(
-            `INSERT INTO feedback (message_id,feedback_type,implicit,created_at) VALUES (?,?,?,?)`
-          ).run(message_id, feedback_type, implicit ? 1 : 0, Date.now());
+            `INSERT INTO feedback (message_id,feedback_type,implicit,is_test,created_at) VALUES (?,?,?,?,?)`
+          ).run(message_id, feedback_type, implicit ? 1 : 0, test_mode ? 1 : 0, Date.now());
         }
       } catch(e) { console.error("feedback写入失败:", e.message); }
       res.writeHead(200, { "Content-Type": "application/json" });
@@ -1177,9 +1239,9 @@ const server = http.createServer(async (req, res) => {
         });
       }
       const feedback_stats = {
-        thumbs_up:   convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_up'").get().c,
-        thumbs_down: convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_down'").get().c,
-        copy:        convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='copy'").get().c,
+        thumbs_up:   convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_up'   AND is_test=0").get().c,
+        thumbs_down: convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='thumbs_down' AND is_test=0").get().c,
+        copy:        convDb.prepare("SELECT COUNT(*) as c FROM feedback WHERE feedback_type='copy'        AND is_test=0").get().c,
       };
       const avgRow = convDb.prepare("SELECT AVG(latency_ms) as avg FROM messages WHERE role='assistant' AND latency_ms IS NOT NULL").get();
       const top_bad_questions = convDb.prepare(`
@@ -1187,12 +1249,66 @@ const server = http.createServer(async (req, res) => {
         FROM feedback f
         JOIN messages ma ON f.message_id = ma.id
         JOIN messages mu ON mu.conversation_id = ma.conversation_id AND mu.role='user'
-        WHERE f.feedback_type='thumbs_down'
+        WHERE f.feedback_type='thumbs_down' AND f.is_test=0
         GROUP BY mu.content ORDER BY cnt DESC LIMIT 10
       `).all();
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ today, last_7_days, feedback_stats,
         avg_latency_ms: Math.round(avgRow.avg || 0), top_bad_questions }));
+    } catch(e) {
+      res.writeHead(500, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: e.message }));
+    }
+    return;
+  }
+
+  // 运营看板 HTML 页面
+  if (pathname === "/admin" && req.method === "GET") {
+    const key = url.searchParams.get("key") || "";
+    if (!STATS_KEY || key !== STATS_KEY) {
+      res.writeHead(401, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("Unauthorized"); return;
+    }
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    res.end(ADMIN_HTML);
+    return;
+  }
+
+  // 会话/消息检视接口（运营用）
+  if (pathname === "/api/inspect" && req.method === "GET") {
+    const key = url.searchParams.get("key") || "";
+    if (!STATS_KEY || key !== STATS_KEY) {
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" })); return;
+    }
+    if (!convDb) {
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "db not available" })); return;
+    }
+    try {
+      const convId = url.searchParams.get("conv_id");
+      const limit  = Math.min(parseInt(url.searchParams.get("limit") || "20"), 100);
+      const offset = parseInt(url.searchParams.get("offset") || "0");
+      if (convId) {
+        // 查单个会话的全部消息
+        const messages = convDb.prepare(
+          `SELECT id, role, content, latency_ms, is_crisis_response, created_at
+           FROM messages WHERE conversation_id=? ORDER BY created_at ASC`
+        ).all(convId);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ conv_id: convId, messages }));
+      } else {
+        // 列出最近 N 个会话（带消息计数）
+        const rows = convDb.prepare(
+          `SELECT c.id, c.ip_hash, c.province, c.subject, c.score,
+                  c.has_crisis_signal, c.created_at, COUNT(m.id) as msg_count
+           FROM conversations c
+           LEFT JOIN messages m ON m.conversation_id=c.id
+           GROUP BY c.id ORDER BY c.created_at DESC LIMIT ? OFFSET ?`
+        ).all(limit, offset);
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ conversations: rows, limit, offset }));
+      }
     } catch(e) {
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: e.message }));
