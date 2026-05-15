@@ -812,10 +812,15 @@ const server = http.createServer(async (req, res) => {
   // 配置信息
   if (pathname === "/api/config") {
     res.writeHead(200, { "Content-Type": "application/json" });
+    let dbRowCount = 0;
+    if (db) {
+      try { dbRowCount = db.prepare("SELECT COUNT(*) as c FROM " + (dbSchema?.tableName || "major_scores")).get().c; } catch(e) {}
+    }
     res.end(JSON.stringify({
       hasApiKey: !!SILICONCLOUD_API_KEY,
       hasQdrant: !!QDRANT_URL,
       hasDb: !!db,
+      dbRowCount,
       llmModel: LLM_MODEL,
       embeddingModel: EMBEDDING_MODEL
     }));

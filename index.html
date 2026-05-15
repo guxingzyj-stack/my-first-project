@@ -948,7 +948,8 @@
         if (data.hasApiKey) {
           statusBar.className = 'status-bar ready';
           const parts = ['✅ 系统就绪'];
-          if (data.hasDb)     parts.push('录取数据 41万条');
+          if (data.hasDb && data.dbRowCount) parts.push(`录取数据 ${(data.dbRowCount / 10000).toFixed(1)}万条`);
+          else if (data.hasDb) parts.push('录取数据已加载');
           if (data.hasQdrant) parts.push('知识库 3,320条');
           statusBar.textContent = parts.join(' · ');
         } else {
