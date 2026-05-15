@@ -607,8 +607,9 @@
     const statusBar    = document.getElementById('statusBar');
     const clearBtnArea = document.getElementById('clearBtnArea');
 
-    let chatHistory = [];
-    let isWaiting   = false;
+    let chatHistory  = [];
+    let isWaiting    = false;
+    let _schoolNames = [];   // 从 /api/config 加载，按名称长度降序，用于精确替换
 
     // ==================== Tab 切换 ====================
     function switchTab(tab) {
@@ -1209,11 +1210,15 @@
       }).join('');
 
       // 学校名可点击跳转查询
-      const _sStop = new Set(['哪些大学','什么大学','哪所大学','哪个大学','好大学','名牌大学','重点大学','哪些学院','什么学院']);
-      html = html.replace(/[一-龥]{2,8}(?:大学|学院)/g, (m) => {
-        if (_sStop.has(m) || m.length < 4) return m;
-        return `<span class="school-link" onclick="jumpToSchoolQuery('${m.replace(/'/g, "\\'")}')">` + m + '</span>';
-      });
+      // 用精确字符串替换（split/join），按名称长度从长到短，避免短名先匹配截断长名
+      if (_schoolNames.length > 0) {
+        for (const name of _schoolNames) {
+          if (!html.includes(name)) continue;
+          const safe = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+          const link = `<span class="school-link" onclick="jumpToSchoolQuery('${safe}')">${name}</span>`;
+          html = html.split(name).join(link);
+        }
+      }
 
       return html;
     }
@@ -1228,6 +1233,8 @@
     async function checkConfig() {
       try {
         const data = await fetch('/api/config').then(r => r.json());
+        // 学校名列表：按长度降序排列，防止短名称先匹配截断长名称
+        _schoolNames = (data.schoolNames || []).sort((a, b) => b.length - a.length);
         if (data.hasApiKey) {
           statusBar.className = 'status-bar ready';
           const parts = ['✅ 系统就绪'];
