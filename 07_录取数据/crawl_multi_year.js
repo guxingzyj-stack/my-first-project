@@ -295,6 +295,17 @@ async function main() {
   console.log('='.repeat(55));
 
   db.close();
+
+  // 完成后自动删除开机自启任务计划
+  if (!isTest) {
+    const { execSync } = require('child_process');
+    try {
+      execSync('powershell.exe -Command "Unregister-ScheduledTask -TaskName GaokaoMultiYearCrawler -Confirm:$false"', { stdio: 'ignore' });
+      console.log('🗑  已自动删除开机自启任务计划 GaokaoMultiYearCrawler');
+    } catch (e) {
+      // 任务不存在或无权限时静默忽略
+    }
+  }
 }
 
 main().catch(e => { console.error('\n❌ 致命错误:', e.message); process.exit(1); });
