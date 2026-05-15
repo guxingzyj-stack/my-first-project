@@ -948,6 +948,12 @@
         sendFeedback(_lastAsstMsgEl, 'follow_up', null, true);
       }
 
+      // 与上一条用户消息 Jaccard 相似度 > 0.8 → 上报 regenerate（用户在重复追问）
+      const _prevUserMsg = chatHistory.slice().reverse().find(m => m.role === 'user')?.content || '';
+      if (_lastAsstMsgEl && _prevUserMsg && jaccardSimilarity(message, _prevUserMsg) > 0.8) {
+        sendFeedback(_lastAsstMsgEl, 'regenerate', null, true);
+      }
+
       const botEl  = existingBotEl || appendBotPlaceholder();
       botEl.dataset.userMsg = message; // 供重新生成使用
       const bubble = botEl.querySelector('.bubble');
@@ -1305,6 +1311,16 @@
           body: JSON.stringify({ message_id: messageId, feedback_type: type, implicit })
         });
       } catch(e) { /* 静默失败，不影响用户 */ }
+    }
+
+    // 字符级 Jaccard 相似度（用于判断用户是否在重复追问）
+    function jaccardSimilarity(a, b) {
+      if (!a || !b) return 0;
+      const sa = new Set(a.replace(/\s/g, ''));
+      const sb = new Set(b.replace(/\s/g, ''));
+      let inter = 0;
+      for (const c of sa) { if (sb.has(c)) inter++; }
+      return inter / (sa.size + sb.size - inter);
     }
 
     // 免责说明关闭（7天内不再显示）
