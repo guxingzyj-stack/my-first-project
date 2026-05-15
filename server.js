@@ -195,57 +195,71 @@ const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂
 
 // 检测用户消息是否包含心理危机信号，任一命中返回 true
 function detectCrisis(text) {
-  // 自伤/自杀类关键词（直接命中，无需上下文）
-  const directSignals = [
-    "不想活", "想死", "自杀", "跳楼", "结束生命",
-    "活不下去", "坚持不住", "不想坚持",
+  // ── L1_STRONG：绝对强触发，白名单对它无效 ──
+  const L1_STRONG = [
+    "不想活", "想死", "去死", "自杀", "跳楼", "轻生",
+    "了断", "结束生命", "活不下去",
   ];
-  // "没意义/没意思/解脱/吃药"需结合生命/存在上下文，避免"专业没意思"误判
-  const lifeWords = ["活", "人生", "生命", "存在", "这辈子"];
-  const softSignals = ["没意义", "没意思", "解脱", "吃药"];
-  for (const s of softSignals) {
-    if (text.includes(s)) {
-      for (const lw of lifeWords) {
-        if (text.includes(lw)) return true;
-      }
-    }
+  if (L1_STRONG.some(kw => text.includes(kw))) return true;
+
+  // ── 家庭暴力，单独出现即触发 ──
+  const VIOLENCE = ["我爸打我", "我妈打我", "家里待不下去", "不敢回家", "被打"];
+  if (VIOLENCE.some(kw => text.includes(kw))) return true;
+
+  // ── 极度绝望 + 考试上下文 ──
+  const DESPAIR  = ["完蛋了", "废了", "没希望了"];
+  const EXAM_CTX = ["考", "分数", "前途", "高考", "成绩", "志愿"];
+  for (const d of DESPAIR) {
+    if (text.includes(d) && EXAM_CTX.some(c => text.includes(c))) return true;
   }
-  for (const kw of directSignals) {
-    if (text.includes(kw)) return true;
+
+  // ── softSignals + lifeWords（精确词组，避免"生活/干活"误伤）──
+  const SOFT     = ["没意义", "没意思", "解脱", "吃药"];
+  const LIFE_CTX = ["活下去", "活着", "人生", "生命", "存在", "这辈子"];
+  for (const s of SOFT) {
+    if (text.includes(s) && LIFE_CTX.some(lw => text.includes(lw))) return true;
   }
-  // 家庭暴力信号
-  const violenceSignals = ["我爸打我", "我妈打我", "家里待不下去", "不敢回家", "被打"];
-  for (const kw of violenceSignals) {
-    if (text.includes(kw)) return true;
+
+  // ── L1_SOFT：情绪词，受白名单保护 ──
+  const L1_SOFT = ["坚持不住", "撑不住", "不想坚持"];
+  if (L1_SOFT.some(kw => text.includes(kw))) {
+    const SAFE = [
+      "复读", "换专业", "重新来", "再来一次", "休息", "调整", "重新开始", "转行", "加油",
+      "学习", "备考", "做题", "刷题",
+      "工作", "锻炼", "跑步", "健身", "减肥",
+    ];
+    if (SAFE.some(w => text.includes(w))) return false;
+    return true;
   }
-  // 极度绝望（需同句出现考试/前途相关词，避免误判日常用语）
-  const despairWords  = ["完蛋了", "废了", "没希望了"];
-  const contextWords  = ["考", "分数", "前途", "高考", "成绩", "志愿"];
-  for (const d of despairWords) {
-    if (text.includes(d)) {
-      for (const c of contextWords) {
-        if (text.includes(c)) return true;
-      }
-    }
-  }
+
   return false;
 }
 
 // 启动自测（失败只打日志，不阻断服务启动）
 function testCrisisDetection() {
   const cases = [
-    ["我不想活了",           true],
-    ["考砸了不想活",         true],
-    ["我想自杀",             true],
-    ["我爸打我",             true],
-    ["活不下去了",           true],
-    ["高考完蛋了没希望了",   true],
-    ["分数出来废了",         true],
-    ["我考砸了想复读",       false],
-    ["这个专业没意思",       false],
-    ["学习没动力",           false],
-    ["高考志愿怎么填",       false],
-    ["我想去北京大学",       false],
+    // ── 必须触发（底线）──
+    ["我不想活了",                true],
+    ["考砸了不想活",              true],
+    ["我想自杀",                  true],
+    ["我爸打我",                  true],
+    ["活不下去了",                true],
+    ["高考完蛋了没希望了",        true],
+    ["分数出来废了",              true],
+    ["坚持不住了",                true],   // L1_SOFT 无白名单词
+    ["我不想活了，加油备考",      true],   // L1_STRONG 不受白名单影响
+    ["活着没意思",                true],   // SOFT+LIFE_CTX "活着"
+    // ── 不能触发（防误伤）──
+    ["我考砸了想复读",            false],
+    ["这个专业没意思",            false],
+    ["学习没动力",                false],
+    ["高考志愿怎么填",            false],
+    ["我想去北京大学",            false],
+    ["考砸了坚持不住了想复读",    false],  // L1_SOFT + 白名单"复读"
+    ["学习坚持不住了",            false],  // L1_SOFT + 白名单"学习"
+    ["工作坚持不住了",            false],  // L1_SOFT + 白名单"工作"
+    ["生活没意思",                false],  // SOFT "没意思" + LIFE_CTX 无精确匹配
+    ["这种活没意思",              false],  // 同上
   ];
   let pass = 0, fail = 0;
   for (const [input, expected] of cases) {
@@ -324,6 +338,26 @@ function initConversationsDb() {
     console.log("✅ 埋点数据库已初始化:", CONV_DB_PATH);
   } catch (e) {
     console.error("⚠️  埋点数据库初始化失败:", e.message);
+  }
+}
+
+// 持久化检测：写入时间戳文件，下次启动时判断 data/ 是否被清空
+function checkDataPersistence() {
+  const checkFile = path.join(CONV_DB_DIR, "_persistence_check");
+  try {
+    if (!fs.existsSync(CONV_DB_DIR)) fs.mkdirSync(CONV_DB_DIR, { recursive: true });
+    if (fs.existsSync(checkFile)) {
+      const prevTs = parseInt(fs.readFileSync(checkFile, "utf-8") || "0");
+      const hours  = Math.round((Date.now() - prevTs) / 3_600_000);
+      console.log(`✅ 持久化检查: data/ 目录持久化正常（距上次启动约 ${hours} 小时）`);
+    } else {
+      console.log("⚠️  持久化检查: 首次启动或 data/ 目录已被清空");
+      console.log("   若此提示每次重启后都出现 → data/ 是临时目录，埋点数据会丢失！");
+      console.log("   Zeabur 用户请在控制台挂载 Volume: /app/data");
+    }
+    fs.writeFileSync(checkFile, Date.now().toString(), "utf-8");
+  } catch(e) {
+    console.error("❌ 持久化检查失败:", e.message, "→ data/ 不可写，埋点数据将丢失");
   }
 }
 
@@ -1115,7 +1149,8 @@ const server = http.createServer(async (req, res) => {
       const ts = todayStart.getTime();
       const today = {
         conversations:  convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE created_at>=?").get(ts).c,
-        messages:       convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=?").get(ts).c,
+        user_messages:  convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='user' AND created_at>=?").get(ts).c,
+        ai_responses:   convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=?").get(ts).c,
         crisis_signals: convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE has_crisis_signal=1 AND created_at>=?").get(ts).c,
       };
       const last_7_days = [];
@@ -1126,7 +1161,8 @@ const server = http.createServer(async (req, res) => {
         last_7_days.push({
           date:           d.toISOString().slice(0, 10),
           conversations:  convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE created_at>=? AND created_at<?").get(t1,t2).c,
-          messages:       convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=? AND created_at<?").get(t1,t2).c,
+          user_messages:  convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='user' AND created_at>=? AND created_at<?").get(t1,t2).c,
+          ai_responses:   convDb.prepare("SELECT COUNT(*) as c FROM messages WHERE role='assistant' AND created_at>=? AND created_at<?").get(t1,t2).c,
           crisis_signals: convDb.prepare("SELECT COUNT(*) as c FROM conversations WHERE has_crisis_signal=1 AND created_at>=? AND created_at<?").get(t1,t2).c,
         });
       }
@@ -1204,6 +1240,7 @@ const server = http.createServer(async (req, res) => {
 // 启动
 initDatabase().then(() => {
   initConversationsDb();
+  checkDataPersistence();
   testCrisisDetection();
   server.listen(PORT, HOST, () => {
   console.log("=".repeat(50));
