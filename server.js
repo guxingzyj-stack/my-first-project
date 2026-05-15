@@ -159,7 +159,22 @@ const SYSTEM_PROMPT = `你是一个高考志愿填报分析助手，像一个懂
 ## 情绪处理
 - 识别到焦虑/崩溃时：先接住情绪，稳住，再给务实方案
 - 识别到"考砸了""不想活了"等危险信号：必须给出心理援助热线（010-82951332 / 400-821-1215）
-- 不对崩溃用户使用激将法`;
+- 不对崩溃用户使用激将法
+
+## 院校推荐规则（重要）
+
+当用户问"能上哪些学校"或"推荐学校"类问题时：
+
+1. **必须按层级分类推荐**：冲、稳、保三档，每档至少给3-5所学校
+2. **本省院校必须单独列出一档**：哪怕分数偏高或偏低，也要列出考生本省的主要院校，说明匹配关系
+3. **结合考生"我的情况"做筛选**：
+   - 用户说"喜欢数理化"→重点推工科、理科强校，避免推财经师范类
+   - 用户说"不想学医"→明确排除医学类院校
+   - 用户说"想留在XX城市"→优先该城市院校
+   - 用户说"家里希望考编/考公"→优先师范、政法、财经类
+   - 用户说"学费敏感"→优先公办，避免推中外合作
+4. **每所学校必须说一句"为什么适合你"**：不要只列学校名，要说明匹配理由
+5. **如果候选数据不足以覆盖某档**：明确说"知识库中XX档数据较少，建议自行查询XX官网补充"，不要编造`;
 
 
 // ==================== SQLite 数据库 ====================
@@ -353,7 +368,7 @@ function searchAdmissionDB(query, userProfile = {}) {
     if (conditions.length === 0) return [];
 
     const orderBy = colMap.year ? `ORDER BY "${colMap.year}" DESC` : "";
-    const sql = `SELECT * FROM "${tableName}" WHERE ${conditions.join(" AND ")} ${orderBy} LIMIT 20`;
+    const sql = `SELECT * FROM "${tableName}" WHERE ${conditions.join(" AND ")} ${orderBy} LIMIT 80`;
     const rows = db.prepare(sql).all(params);
     if (!rows.length) return [];
 
@@ -371,7 +386,7 @@ function searchAdmissionDB(query, userProfile = {}) {
 
 function formatDbRows(rows, colMap) {
   const lines = [`共找到 ${rows.length} 条录取记录：\n`];
-  for (const row of rows.slice(0, 15)) {
+  for (const row of rows.slice(0, 60)) {
     const parts = [];
     if (colMap.year)     parts.push(`${row[colMap.year]}年`);
     if (colMap.school)   parts.push(row[colMap.school]);
