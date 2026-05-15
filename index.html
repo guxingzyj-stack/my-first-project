@@ -80,6 +80,18 @@
     .profile-select:focus, .profile-input:focus { border-color: #7c3aed; background: #fff; }
     .profile-hint { font-size: 12px; color: #aaa; margin-top: 8px; }
 
+    /* 免责说明条 */
+    .disclaimer-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f7f7f7; padding: 7px 16px; gap: 12px;
+      font-size: 11.5px; color: #888; border-bottom: 1px solid #ebebeb;
+    }
+    .disclaimer-close {
+      background: none; border: none; color: #bbb; cursor: pointer;
+      font-size: 16px; padding: 0 4px; flex-shrink: 0; line-height: 1;
+    }
+    .disclaimer-close:hover { color: #888; }
+
     /* 功能卡片 */
     .feature-list {
       display: grid; grid-template-columns: 1fr 1fr;
@@ -485,6 +497,12 @@
   <!-- 状态栏 -->
   <div class="status-bar" id="statusBar">检查系统状态...</div>
 
+  <!-- 免责说明（可关闭，7天后自动恢复）-->
+  <div class="disclaimer-bar" id="disclaimerBar">
+    <span>⚠️ 本工具为公益项目，仅供参考。录取以阳光高考、各省教育考试院、学校官网为准。重大决策请咨询学校老师或专业人员。</span>
+    <button class="disclaimer-close" onclick="closeDisclaimer()" title="关闭">×</button>
+  </div>
+
   <!-- Tab 导航 -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')">💬 智能咨询</button>
@@ -615,9 +633,11 @@
     const statusBar    = document.getElementById('statusBar');
     const clearBtnArea = document.getElementById('clearBtnArea');
 
-    let chatHistory  = [];
-    let isWaiting    = false;
-    let _schoolNames = [];   // 从 /api/config 加载，按名称长度降序，用于精确替换
+    let chatHistory    = [];
+    let isWaiting      = false;
+    let _schoolNames   = [];   // 从 /api/config 加载，按名称长度降序，用于精确替换
+    let _lastAsstMsgEl = null; // 上一条 bot 消息元素（用于 follow_up 隐式埋点）
+    let _lastAsstTime  = 0;    // 上一条 bot 消息完成时间
 
     // ==================== Tab 切换 ====================
     function switchTab(tab) {
@@ -923,6 +943,11 @@
         showClearBtn();
       }
 
+      // 30秒内追问 → 对上一条 bot 消息上报 follow_up
+      if (_lastAsstMsgEl && Date.now() - _lastAsstTime < 30_000) {
+        sendFeedback(_lastAsstMsgEl, 'follow_up', null, true);
+      }
+
       const botEl  = existingBotEl || appendBotPlaceholder();
       botEl.dataset.userMsg = message; // 供重新生成使用
       const bubble = botEl.querySelector('.bubble');
@@ -984,6 +1009,9 @@
               if (!replyText) bubble.textContent = '';
               replyText += event.content;
               scheduleRender();
+            } else if (event.type === 'done') {
+              // 存储 message_id，供反馈按钮使用
+              if (event.message_id) botEl.dataset.messageId = event.message_id;
             } else if (event.type === 'error') {
               flushRender();
               bubble.innerHTML = `<span style="color:#e74c3c;">❌ ${escHtml(event.message)}</span>`;
@@ -992,6 +1020,9 @@
         }
 
         flushRender();
+        // 记录本轮 bot 消息，用于下一次追问的 follow_up 埋点
+        _lastAsstMsgEl = botEl;
+        _lastAsstTime  = Date.now();
         if (replyText) {
           // 重新生成时替换最后一条 assistant；否则追加
           if (noUserBubble) {
@@ -1064,7 +1095,23 @@
       const actions = document.createElement('div');
       actions.className = 'msg-actions';
 
-      // 复制按钮
+      // 👍 有帮助
+      const thumbUpBtn = document.createElement('button');
+      thumbUpBtn.className = 'msg-action-btn';
+      thumbUpBtn.textContent = '👍';
+      thumbUpBtn.title = '有帮助';
+      thumbUpBtn.onclick = () => sendFeedback(div, 'thumbs_up', thumbUpBtn);
+      actions.appendChild(thumbUpBtn);
+
+      // 👎 没帮助
+      const thumbDownBtn = document.createElement('button');
+      thumbDownBtn.className = 'msg-action-btn';
+      thumbDownBtn.textContent = '👎';
+      thumbDownBtn.title = '没帮助';
+      thumbDownBtn.onclick = () => sendFeedback(div, 'thumbs_down', thumbDownBtn);
+      actions.appendChild(thumbDownBtn);
+
+      // 📋 复制（同时上报）
       const copyBtn = document.createElement('button');
       copyBtn.className = 'msg-action-btn';
       copyBtn.textContent = '📋 复制';
@@ -1072,6 +1119,7 @@
         navigator.clipboard.writeText(bubble.innerText).then(() => {
           copyBtn.textContent = '✅ 已复制';
           setTimeout(() => { copyBtn.textContent = '📋 复制'; }, 2000);
+          sendFeedback(div, 'copy', null);
         }).catch(() => {});
       };
       actions.appendChild(copyBtn);
@@ -1206,17 +1254,16 @@
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/\*(.+?)\*/g,     '<em>$1</em>');
 
-      // 有序列表：先标记为临时标签 <oli>，避免与无序列表的 <li> 混淆
-      html = html.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
-      // 无序列表：标记为临时标签 <uli>
-      html = html.replace(/^[-*] (.+)$/gm, '<uli>$1</uli>');
-      // 把连续 <oli> 块包裹成 <ol>
-      html = html.replace(/(<oli>.*<\/oli>\n?)+/g, m => `<ol>${m}</ol>`);
-      // 把连续 <uli> 块包裹成 <ul>
-      html = html.replace(/(<uli>.*<\/uli>\n?)+/g, m => `<ul>${m}</ul>`);
-      // 把临时标签统一替换为 <li>
-      html = html.replace(/<oli>/g, '<li>').replace(/<\/oli>/g, '</li>');
-      html = html.replace(/<uli>/g, '<li>').replace(/<\/uli>/g, '</li>');
+      // 有序列表：先处理（数字+点+空格开头），用唯一占位标签避免与无序列表冲突
+      html = html.replace(/^\d+\. (.+)$/gm, '\x02OLI\x03$1\x02/OLI\x03');
+      // 无序列表：只匹配 "- " 或 "* " 开头（不重复匹配已标记的有序列表行）
+      html = html.replace(/^[-*] (.+)$/gm, '\x02ULI\x03$1\x02/ULI\x03');
+      // 把连续有序列表行包裹成 <ol>
+      html = html.replace(/(\x02OLI\x03[\s\S]*?\x02\/OLI\x03\n?)+/g,
+        m => '<ol>' + m.replace(/\x02OLI\x03([\s\S]*?)\x02\/OLI\x03/g, '<li>$1</li>') + '</ol>');
+      // 把连续无序列表行包裹成 <ul>
+      html = html.replace(/(\x02ULI\x03[\s\S]*?\x02\/ULI\x03\n?)+/g,
+        m => '<ul>' + m.replace(/\x02ULI\x03([\s\S]*?)\x02\/ULI\x03/g, '<li>$1</li>') + '</ul>');
 
       // 分隔线
       html = html.replace(/^---+$/gm, '<hr>');
@@ -1245,6 +1292,36 @@
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
+
+    // 反馈上报（失败静默）
+    async function sendFeedback(msgEl, type, btn, implicit = false) {
+      const messageId = msgEl?.dataset?.messageId;
+      if (!messageId) return;
+      if (btn) { btn.disabled = true; btn.style.opacity = '0.45'; }
+      try {
+        await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message_id: messageId, feedback_type: type, implicit })
+        });
+      } catch(e) { /* 静默失败，不影响用户 */ }
+    }
+
+    // 免责说明关闭（7天内不再显示）
+    function closeDisclaimer() {
+      const el = document.getElementById('disclaimerBar');
+      if (el) el.style.display = 'none';
+      localStorage.setItem('disclaimer_closed', Date.now().toString());
+    }
+
+    // 初始化：检查是否在7天内关闭过
+    (function checkDisclaimer() {
+      const closed = parseInt(localStorage.getItem('disclaimer_closed') || '0');
+      if (Date.now() - closed < 7 * 24 * 3600 * 1000) {
+        const el = document.getElementById('disclaimerBar');
+        if (el) el.style.display = 'none';
+      }
+    })();
 
     // ---- 系统状态检查 ----
     async function checkConfig() {

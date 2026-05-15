@@ -4,3 +4,5 @@ package-lock.json
 *.db
 *.db-shm
 *.db-wal
+# 埋点数据库（含用户对话，绝不提交）
+data/
