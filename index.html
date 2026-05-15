@@ -530,7 +530,15 @@
         <div class="profile-row">
           <input class="profile-input" type="number" id="scoreInput"
             placeholder="高考分数（如 580）" min="0" max="750"
-            oninput="updateProfileBadge()">
+            oninput="updateProfileBadge()" style="flex:1">
+          <input class="profile-input" type="number" id="rankInput"
+            placeholder="省内位次（如 15000）" min="1"
+            oninput="updateProfileBadge()" style="flex:1">
+        </div>
+        <div class="profile-row">
+          <textarea class="profile-input" id="situationInput" rows="2"
+            placeholder="我的情况（选填）：比如喜欢数学、不想学医、想留在重庆、家里希望考公..."
+            style="width:100%;resize:none;font-family:inherit"></textarea>
         </div>
         <div class="profile-hint">填写后 AI 会基于你的实际情况分析，无需每次重复说明</div>
       </div>
@@ -807,9 +815,11 @@
 
     function getUserProfile() {
       return {
-        province: document.getElementById('provinceSelect').value,
-        subject:  document.getElementById('subjectSelect').value,
-        score:    document.getElementById('scoreInput').value
+        province:  document.getElementById('provinceSelect').value,
+        subject:   document.getElementById('subjectSelect').value,
+        score:     document.getElementById('scoreInput').value,
+        rank:      document.getElementById('rankInput').value,
+        situation: document.getElementById('situationInput').value
       };
     }
 
@@ -820,7 +830,7 @@
       const parts = [];
       if (p.province) parts.push(p.province);
       if (p.subject)  parts.push(p.subject);
-      if (p.score)    parts.push(p.score + '分');
+      if (p.score)    parts.push(p.score + '分' + (p.rank ? '·位次' + p.rank : ''));
       badge.textContent = parts.length ? parts.join(' · ') : '未填写';
       badge.style.background = parts.length ? '#7c3aed' : '#aaa';
       if (hint) {
