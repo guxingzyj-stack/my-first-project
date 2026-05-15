@@ -1181,7 +1181,17 @@
 
     // ---- Markdown 渲染 ----
     function renderMarkdown(text) {
-      // 先转义 HTML 特殊字符
+      // 第一步：在 HTML 转义前，用正则识别原始文本中的学校名，用占位符替换并记录映射
+      const _schoolMap = {};
+      let   _schoolIdx = 0;
+      const _schoolRe  = /[一-龥]{2,10}(?:大学|学院)/g;
+      text = text.replace(_schoolRe, (m) => {
+        const key = `___SCHOOL_${_schoolIdx++}___`;
+        _schoolMap[key] = m;
+        return key;
+      });
+
+      // 第二步：正常 HTML 转义（占位符全为 ASCII，不受影响）
       let html = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
@@ -1219,16 +1229,13 @@
         return `<p>${para.replace(/\n/g, '<br>')}</p>`;
       }).join('');
 
-      // 学校名可点击跳转查询
-      // 用精确字符串替换（split/join），按名称长度从长到短，避免短名先匹配截断长名
-      if (_schoolNames.length > 0) {
-        for (const name of _schoolNames) {
-          if (!html.includes(name)) continue;
-          const safe = name.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-          const link = `<span class="school-link" onclick="jumpToSchoolQuery('${safe}')">${name}</span>`;
-          html = html.split(name).join(link);
-        }
-      }
+      // 第三步：把占位符还原为可点击的学校名链接
+      html = html.replace(/___SCHOOL_\d+___/g, (key) => {
+        const name = _schoolMap[key];
+        if (!name) return key;
+        const safe = name.replace(/'/g, "\\'");
+        return `<span class="school-link" onclick="jumpToSchoolQuery('${safe}')">${name}</span>`;
+      });
 
       return html;
     }
