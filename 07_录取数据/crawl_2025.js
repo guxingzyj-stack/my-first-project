@@ -289,6 +289,42 @@ async function main() {
 
   db.close();
   if (fs.existsSync(PROGRESS_FILE) && !isTest) fs.unlinkSync(PROGRESS_FILE);
+
+  // 完成后自动删除开机自启任务计划
+  if (!isTest) {
+    const { execSync } = require('child_process');
+    try {
+      execSync('powershell.exe -Command "Unregister-ScheduledTask -TaskName GaokaoCrawler2025 -Confirm:$false" ', { stdio: 'ignore' });
+      console.log('🗑  已自动删除开机自启任务计划 GaokaoCrawler2025');
+    } catch (e) {
+      // 任务不存在或无权限时静默忽略
+    }
+  }
+
+  // 2025年完成后自动启动多年历史数据爬虫
+  if (!isTest) {
+    const { spawn } = require('child_process');
+    const multiScript = path.join(__dirname, 'crawl_multi_year.js');
+    const logFile     = path.join(__dirname, 'crawl_multi_log.txt');
+
+    if (fs.existsSync(multiScript)) {
+      console.log('\n🚀 2025年数据抓取完成，自动启动历史数据爬虫（2020-2023年）...');
+      console.log(`   日志输出：${logFile}`);
+
+      const out = fs.openSync(logFile, 'a');
+      const child = spawn(process.execPath, [multiScript], {
+        detached: true,
+        stdio: ['ignore', out, out],
+        cwd: __dirname,
+      });
+      child.unref(); // 父进程退出后子进程继续运行
+
+      console.log(`   历史爬虫已在后台启动（PID ${child.pid}），本进程即将退出。`);
+      console.log(`   查看进度：tail -f "${logFile}"`);
+    } else {
+      console.log('\n⚠️  未找到 crawl_multi_year.js，跳过历史数据爬取。');
+    }
+  }
 }
 
 main().catch(e => { console.error('\n❌ 致命错误:', e.message); process.exit(1); });
