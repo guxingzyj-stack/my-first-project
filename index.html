@@ -503,6 +503,11 @@
     <button class="disclaimer-close" onclick="closeDisclaimer()" title="关闭">×</button>
   </div>
 
+  <!-- 测试模式提示（访问 ?test=1 时显示）-->
+  <div id="testModeBar" style="display:none;background:#dc2626;color:#fff;text-align:center;padding:6px 16px;font-size:13px;font-weight:bold;letter-spacing:.5px;">
+    ⚠️ 测试模式 · 反馈不计入统计
+  </div>
+
   <!-- Tab 导航 -->
   <div class="tab-bar">
     <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')">💬 智能咨询</button>
@@ -638,6 +643,13 @@
     let _schoolNames   = [];   // 从 /api/config 加载，按名称长度降序，用于精确替换
     let _lastAsstMsgEl = null; // 上一条 bot 消息元素（用于 follow_up 隐式埋点）
     let _lastAsstTime  = 0;    // 上一条 bot 消息完成时间
+
+    // 测试模式：访问 ?test=1 时反馈带 is_test 标记，不计入统计
+    const IS_TEST_MODE = new URLSearchParams(window.location.search).get('test') === '1';
+    if (IS_TEST_MODE) {
+      const bar = document.getElementById('testModeBar');
+      if (bar) bar.style.display = 'block';
+    }
 
     // ==================== Tab 切换 ====================
     function switchTab(tab) {
@@ -1327,7 +1339,7 @@
         await fetch('/api/feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ message_id: messageId, feedback_type: type, implicit })
+          body: JSON.stringify({ message_id: messageId, feedback_type: type, implicit, test_mode: IS_TEST_MODE })
         });
       } catch(e) { /* 静默失败，不影响用户 */ }
     }
