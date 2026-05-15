@@ -466,6 +466,48 @@
       cursor: pointer; white-space: nowrap; transition: background 0.15s;
     }
     .ask-ai-btn:hover { background: #e9d5ff; }
+
+    /* ===== 请喝咖啡 ===== */
+    .coffee-bar {
+      text-align: center; padding: 10px 16px 14px;
+      font-size: 12px; color: #bbb; line-height: 1.8;
+      flex-shrink: 0;
+    }
+    .coffee-bar a {
+      color: #bbb; text-decoration: none; cursor: pointer;
+      transition: color 0.15s;
+    }
+    .coffee-bar a:hover { color: #7c3aed; }
+    body.dark .coffee-bar { color: #555; }
+    body.dark .coffee-bar a { color: #555; }
+    body.dark .coffee-bar a:hover { color: #a78bfa; }
+
+    .coffee-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .coffee-overlay.open { display: flex; }
+    .coffee-modal {
+      background: #fff; border-radius: 16px; padding: 24px 28px 20px;
+      max-width: 360px; width: 90%; text-align: center;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18); position: relative;
+    }
+    body.dark .coffee-modal { background: #1e1e30; color: #e0e0e0; }
+    .coffee-modal h3 { margin: 0 0 6px; font-size: 16px; }
+    .coffee-modal p  { margin: 0 0 16px; font-size: 13px; color: #888; }
+    body.dark .coffee-modal p { color: #aaa; }
+    .coffee-qrs { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .coffee-qrs div { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: #888; }
+    body.dark .coffee-qrs div { color: #aaa; }
+    .coffee-qrs img { width: 130px; height: 130px; border-radius: 8px; border: 1px solid #eee; object-fit: cover; }
+    body.dark .coffee-qrs img { border-color: #444; }
+    .coffee-close {
+      position: absolute; top: 12px; right: 14px;
+      font-size: 20px; color: #aaa; cursor: pointer;
+      background: none; border: none; line-height: 1; padding: 0;
+    }
+    .coffee-close:hover { color: #555; }
   </style>
 </head>
 <body>
@@ -601,6 +643,30 @@
     </div>
   </div>
   </div><!-- end chat-panel -->
+
+  <!-- 请喝咖啡入口（底部小字）-->
+  <div class="coffee-bar">
+    项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()">请站长喝杯咖啡 ☕</a>
+  </div>
+
+  <!-- 请喝咖啡 Modal -->
+  <div class="coffee-overlay" id="coffeeOverlay" onclick="closeCoffeeModal(event)">
+    <div class="coffee-modal">
+      <button class="coffee-close" onclick="closeCoffeeModal()" title="关闭">×</button>
+      <h3>☕ 请站长喝杯咖啡</h3>
+      <p>项目完全公益，服务器费用自费<br>您的支持是坚持下去的动力 🙏</p>
+      <div class="coffee-qrs">
+        <div>
+          <img src="/static/coffee-wechat.png" alt="微信收款码" onerror="this.style.background='#f3e5f5'">
+          <span>微信</span>
+        </div>
+        <div>
+          <img src="/static/coffee-alipay.png" alt="支付宝收款码" onerror="this.style.background='#e0f0ff'">
+          <span>支付宝</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- 数据查询面板 -->
   <div class="query-panel" id="queryPanel">
@@ -1507,6 +1573,21 @@
     }
     document.querySelector('.dark-btn').textContent =
       document.body.classList.contains('dark') ? '☀️' : '🌙';
+
+    // ==================== 请喝咖啡 Modal ====================
+    function openCoffeeModal() {
+      document.getElementById('coffeeOverlay').classList.add('open');
+    }
+    function closeCoffeeModal(e) {
+      // 点击遮罩层本身（非 modal 内部）或关闭按钮时关闭
+      if (!e || e.target === document.getElementById('coffeeOverlay') || e.currentTarget.classList.contains('coffee-close')) {
+        document.getElementById('coffeeOverlay').classList.remove('open');
+      }
+    }
+    // ESC 键关闭
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') document.getElementById('coffeeOverlay').classList.remove('open');
+    });
   </script>
 </body>
 </html>
