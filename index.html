@@ -1016,8 +1016,11 @@
               replyText += event.content;
               scheduleRender();
             } else if (event.type === 'done') {
-              // 存储 message_id，供反馈按钮使用
-              if (event.message_id) botEl.dataset.messageId = event.message_id;
+              // messageId 就位后再渲染反馈按钮，避免点击时 messageId 为空
+              if (event.message_id) {
+                botEl.dataset.messageId = event.message_id;
+                appendFeedbackButtons(botEl);
+              }
             } else if (event.type === 'error') {
               flushRender();
               bubble.innerHTML = `<span style="color:#e74c3c;">❌ ${escHtml(event.message)}</span>`;
@@ -1098,39 +1101,12 @@
       div.appendChild(bubble);
 
       // 操作按钮区（悬停显示）
+      // 👍👎📋 三个反馈按钮在 SSE done 事件后由 appendFeedbackButtons() 注入
+      // 这里只放 🔄 重新生成（不依赖 messageId）
       const actions = document.createElement('div');
       actions.className = 'msg-actions';
 
-      // 👍 有帮助
-      const thumbUpBtn = document.createElement('button');
-      thumbUpBtn.className = 'msg-action-btn';
-      thumbUpBtn.textContent = '👍';
-      thumbUpBtn.title = '有帮助';
-      thumbUpBtn.onclick = () => sendFeedback(div, 'thumbs_up', thumbUpBtn);
-      actions.appendChild(thumbUpBtn);
-
-      // 👎 没帮助
-      const thumbDownBtn = document.createElement('button');
-      thumbDownBtn.className = 'msg-action-btn';
-      thumbDownBtn.textContent = '👎';
-      thumbDownBtn.title = '没帮助';
-      thumbDownBtn.onclick = () => sendFeedback(div, 'thumbs_down', thumbDownBtn);
-      actions.appendChild(thumbDownBtn);
-
-      // 📋 复制（同时上报）
-      const copyBtn = document.createElement('button');
-      copyBtn.className = 'msg-action-btn';
-      copyBtn.textContent = '📋 复制';
-      copyBtn.onclick = () => {
-        navigator.clipboard.writeText(bubble.innerText).then(() => {
-          copyBtn.textContent = '✅ 已复制';
-          setTimeout(() => { copyBtn.textContent = '📋 复制'; }, 2000);
-          sendFeedback(div, 'copy', null);
-        }).catch(() => {});
-      };
-      actions.appendChild(copyBtn);
-
-      // 重新生成按钮
+      // 🔄 重新生成
       const regenBtn = document.createElement('button');
       regenBtn.className = 'msg-action-btn';
       regenBtn.textContent = '🔄';
@@ -1139,6 +1115,7 @@
         if (isWaiting) return;
         const userMsg = div.dataset.userMsg;
         if (!userMsg) return;
+        sendFeedback(div, 'regenerate', null, false); // 显式上报 regenerate
         // 从历史中移除最后一条 assistant 消息
         const lastIdx = chatHistory.map(m => m.role).lastIndexOf('assistant');
         if (lastIdx >= 0) chatHistory.splice(lastIdx, 1);
@@ -1297,6 +1274,48 @@
       return String(text)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;')
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // 反馈按钮注入（在 SSE done 事件后调用，确保 messageId 已就位）
+    function appendFeedbackButtons(botEl) {
+      const actions = botEl.querySelector('.msg-actions');
+      if (!actions) return;
+
+      const thumbUpBtn = document.createElement('button');
+      thumbUpBtn.className = 'msg-action-btn';
+      thumbUpBtn.textContent = '👍';
+      thumbUpBtn.title = '有帮助';
+      thumbUpBtn.onclick = () => sendFeedback(botEl, 'thumbs_up', thumbUpBtn);
+
+      const thumbDownBtn = document.createElement('button');
+      thumbDownBtn.className = 'msg-action-btn';
+      thumbDownBtn.textContent = '👎';
+      thumbDownBtn.title = '没帮助';
+      thumbDownBtn.onclick = () => sendFeedback(botEl, 'thumbs_down', thumbDownBtn);
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'msg-action-btn';
+      copyBtn.textContent = '📋 复制';
+      copyBtn.onclick = () => {
+        const bubble = botEl.querySelector('.bubble');
+        navigator.clipboard.writeText(bubble.innerText).then(() => {
+          copyBtn.textContent = '✅ 已复制';
+          setTimeout(() => { copyBtn.textContent = '📋 复制'; }, 2000);
+          sendFeedback(botEl, 'copy', null);
+        }).catch(() => {});
+      };
+
+      // 插到 🔄 之前，保持 👍👎📋🔄 顺序
+      const regenBtn = actions.querySelector('[title="重新生成"]');
+      if (regenBtn) {
+        actions.insertBefore(copyBtn,      regenBtn);
+        actions.insertBefore(thumbDownBtn, copyBtn);
+        actions.insertBefore(thumbUpBtn,   thumbDownBtn);
+      } else {
+        actions.appendChild(thumbUpBtn);
+        actions.appendChild(thumbDownBtn);
+        actions.appendChild(copyBtn);
+      }
     }
 
     // 反馈上报（失败静默）
