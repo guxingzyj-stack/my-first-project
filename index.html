@@ -336,18 +336,150 @@
     .page-btn:hover { background: #f0ebff; }
     .page-btn.cur { background: #7c3aed; color: #fff; border-color: #7c3aed; }
     .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ===== 深色模式 ===== */
+    body.dark { background: #1a1a2e; }
+    body.dark .header-title { color: #a78bfa; }
+    body.dark .menu-btn { color: #bbb; }
+    body.dark .profile-panel, body.dark .feature-card,
+    body.dark .query-filters, body.dark .result-table-wrap { background: #2d2d44; }
+    body.dark .profile-select, body.dark .profile-input,
+    body.dark .filter-select, body.dark .filter-input { background: #3a3a55; color: #e0e0e0; border-color: #555; }
+    body.dark .chat-area { background: rgba(255,255,255,0.05); }
+    body.dark .message.bot .bubble { background: #2d2d44; color: #e0e0e0; }
+    body.dark .message.bot .bubble h3 { color: #a78bfa; }
+    body.dark .message.bot .bubble strong { color: #e0e0e0; }
+    body.dark .input-box { background: #2d2d44; }
+    body.dark .input-box textarea { color: #e0e0e0; }
+    body.dark .welcome-text { color: #e0e0e0; }
+    body.dark .profile-header-left { color: #ccc; }
+    body.dark .result-table th { background: #3d2d5c; }
+    body.dark .result-table td { color: #ccc; border-color: #3a3a55; }
+    body.dark .result-table tr:hover td { background: #3a3558; }
+    body.dark .sources-list { background: #2a2a3e; color: #bbb; }
+    body.dark .tab-btn { background: rgba(255,255,255,0.08); color: #bbb; }
+    body.dark .status-bar { background: rgba(45,45,68,0.9); color: #bbb; }
+    body.dark .status-bar.ready { background: rgba(20,50,40,0.9); color: #6fcf97; }
+    .dark-btn { font-size: 20px; cursor: pointer; padding: 8px; color: #666; background: none; border: none; }
+
+    /* ===== 学校名可点击 ===== */
+    .school-link { color: #7c3aed; text-decoration: underline dotted; cursor: pointer; font-weight: 600; }
+    .school-link:hover { text-decoration: underline solid; }
+
+    /* ===== 消息操作按钮（复制/重新生成）===== */
+    .message.bot { position: relative; padding-bottom: 22px; }
+    .msg-actions {
+      position: absolute; right: 0; bottom: 2px;
+      display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+    }
+    .message.bot:hover .msg-actions { opacity: 1; pointer-events: auto; }
+    .msg-action-btn {
+      font-size: 11px; color: #aaa; cursor: pointer;
+      background: #fff; border: 1px solid #eee;
+      border-radius: 6px; padding: 2px 7px; transition: all 0.15s;
+    }
+    .msg-action-btn:hover { color: #7c3aed; border-color: #c4b5fd; }
+    body.dark .msg-action-btn { background: #3d3d58; border-color: #555; color: #aaa; }
+
+    /* ===== 追问按钮 ===== */
+    .followup-area { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
+    .followup-btn {
+      font-size: 12px; color: #7c3aed; cursor: pointer;
+      background: #f3e5f5; border: none; border-radius: 14px;
+      padding: 4px 12px; transition: background 0.15s;
+    }
+    .followup-btn:hover { background: #e9d5ff; }
+    body.dark .followup-btn { background: #3d2d5c; color: #c4b5fd; }
+
+    /* ===== 历史对话抽屉 ===== */
+    .history-drawer {
+      position: fixed; top: 0; left: -270px; width: 260px; height: 100vh;
+      background: #fff; z-index: 100; transition: left 0.28s ease;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.15);
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    body.dark .history-drawer { background: #22223a; }
+    .history-drawer.open { left: 0; }
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 99; }
+    .drawer-overlay.open { display: block; }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 14px 10px; border-bottom: 1px solid #eee; flex-shrink: 0;
+    }
+    body.dark .drawer-header { border-color: #333; }
+    .drawer-new-btn {
+      font-size: 13px; color: #7c3aed; background: #f3e5f5;
+      border: none; border-radius: 8px; padding: 5px 10px; font-weight: 600; cursor: pointer;
+    }
+    .drawer-new-btn:hover { background: #e9d5ff; }
+    .drawer-close { font-size: 18px; cursor: pointer; color: #999; background: none; border: none; padding: 2px 6px; }
+    .drawer-title { font-size: 14px; font-weight: 600; color: #333; }
+    body.dark .drawer-title { color: #e0e0e0; }
+    .history-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+    .history-date-group { padding: 6px 14px 4px; font-size: 11px; color: #aaa; font-weight: 600; letter-spacing: 0.5px; }
+    .history-item {
+      display: flex; align-items: center; padding: 9px 14px;
+      cursor: pointer; gap: 8px; transition: background 0.15s;
+    }
+    .history-item:hover { background: #f5f0ff; }
+    body.dark .history-item:hover { background: #2d2d44; }
+    .history-item-text {
+      flex: 1; font-size: 13px; color: #333;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    body.dark .history-item-text { color: #ccc; }
+    .history-item-del { font-size: 14px; color: #ccc; cursor: pointer; padding: 0 2px; flex-shrink: 0; }
+    .history-item-del:hover { color: #e74c3c; }
+
+    /* ===== 骨架屏 ===== */
+    @keyframes shimmer {
+      0%   { background-position: -400px 0; }
+      100% { background-position:  400px 0; }
+    }
+    .skeleton-cell {
+      height: 14px; border-radius: 4px;
+      background: linear-gradient(90deg, #e0d4ff 25%, #f0ebff 50%, #e0d4ff 75%);
+      background-size: 400px 100%;
+      animation: shimmer 1.2s infinite linear;
+    }
+    body.dark .skeleton-cell {
+      background: linear-gradient(90deg, #3a3558 25%, #4a4568 50%, #3a3558 75%);
+      background-size: 400px 100%;
+    }
+
+    /* ===== 数据查询"问AI"按钮 ===== */
+    .ask-ai-btn {
+      font-size: 12px; color: #7c3aed; background: #f3e5f5;
+      border: none; border-radius: 8px; padding: 3px 8px;
+      cursor: pointer; white-space: nowrap; transition: background 0.15s;
+    }
+    .ask-ai-btn:hover { background: #e9d5ff; }
   </style>
 </head>
 <body>
 
+  <!-- 历史对话抽屉 -->
+  <div class="history-drawer" id="historyDrawer">
+    <div class="drawer-header">
+      <button class="drawer-new-btn" onclick="startNewChat()">＋ 新对话</button>
+      <span class="drawer-title">历史对话</span>
+      <button class="drawer-close" onclick="toggleDrawer()">✕</button>
+    </div>
+    <div class="history-list" id="historyList"></div>
+  </div>
+  <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+
   <!-- 顶部导航 -->
   <div class="header">
-    <div style="width: 40px;"></div>
+    <button class="menu-btn" onclick="toggleDrawer()" title="历史对话">📋</button>
     <div class="header-center">
       <div class="header-icon">🎓</div>
       <span class="header-title">高考志愿咨询</span>
     </div>
-    <div class="menu-btn">☰</div>
+    <div style="display:flex;gap:4px;align-items:center">
+      <button class="dark-btn" onclick="toggleDarkMode()" title="切换深色模式">🌙</button>
+      <div class="menu-btn">☰</div>
+    </div>
   </div>
 
   <!-- 状态栏 -->
@@ -561,6 +693,14 @@
       if (batch)    params.set('batch', batch);
       params.set('page', page);
 
+      // 骨架屏
+      const _skCells = Array(8).fill('<td><div class="skeleton-cell"></div></td>').join('');
+      const _skRows  = Array(8).fill(`<tr>${_skCells}</tr>`).join('');
+      document.getElementById('queryResults').innerHTML =
+        `<div class="result-table-wrap"><table class="result-table">` +
+        `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th><th></th></tr></thead>` +
+        `<tbody>${_skRows}</tbody></table></div>`;
+
       try {
         const res  = await fetch('/api/scores?' + params);
         const data = await res.json();
@@ -615,7 +755,7 @@
       let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#7c3aed">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
       const showTag = myScore > 0;
-      html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}</tr></thead><tbody>`;
+      html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th></th></tr></thead><tbody>`;
       for (const r of rows) {
         const tag = showTag ? calcTag(myScore, r.min_score, myRank, r.min_rank) : '';
         html += `<tr>
@@ -627,6 +767,7 @@
           <td><span class="score-highlight">${r.min_score||'-'}</span></td>
           <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
           ${showTag ? `<td>${tag}</td>` : ''}
+          <td><button class="ask-ai-btn" onclick="askAboutSchool('${(r.school||'').replace(/'/g,"\\'")}',${r.year||0},'${(r.province||'').replace(/'/g,"\\'")}',${r.min_score||0},${r.min_rank||0})">问AI</button></td>
         </tr>`;
       }
       html += '</tbody></table></div>';
@@ -674,12 +815,22 @@
     function updateProfileBadge() {
       const p = getUserProfile();
       const badge = document.getElementById('profileBadge');
+      const hint  = document.querySelector('.profile-hint');
       const parts = [];
       if (p.province) parts.push(p.province);
       if (p.subject)  parts.push(p.subject);
       if (p.score)    parts.push(p.score + '分');
       badge.textContent = parts.length ? parts.join(' · ') : '未填写';
       badge.style.background = parts.length ? '#7c3aed' : '#aaa';
+      if (hint) {
+        if (parts.length > 0) {
+          hint.textContent = '✅ 已记录，后续回答将基于你的情况分析';
+          hint.style.color  = '#2e7d32';
+        } else {
+          hint.textContent = '填写后 AI 会基于你的实际情况分析，无需每次重复说明';
+          hint.style.color  = '#aaa';
+        }
+      }
     }
 
     // ---- 功能卡片 ----
@@ -704,8 +855,30 @@
       messageInput.focus();
     }
 
+    // ---- 学校名点击跳转查询 ----
+    function jumpToSchoolQuery(name) {
+      switchTab('data');
+      document.getElementById('qSchool').value = name;
+      doQuery(1);
+    }
+
+    // ---- 数据查询行"问AI"按钮 ----
+    function askAboutSchool(school, year, province, minScore, minRank) {
+      const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
+      let text = `${school} ${year}年在${province}录取最低分${minScore}`;
+      if (minRank) text += `，位次${minRank}`;
+      if (myScore) text += `，我的分数是${myScore}`;
+      text += `，帮我分析值不值得报这所学校`;
+      switchTab('chat');
+      messageInput.value = text;
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+      sendMessage();
+    }
+
     // ---- 清空对话 ----
     function clearChat() {
+      saveCurrentChatToHistory();
       chatArea.innerHTML = '';
       chatHistory = [];
       clearBtnArea.innerHTML = '';
@@ -718,29 +891,39 @@
     }
 
     // ---- 核心发送逻辑 ----
-    async function sendMessage() {
+    // opts: { noUserBubble: bool, existingBotEl: Element }
+    async function sendMessage(opts = {}) {
+      const { noUserBubble = false, existingBotEl = null } = opts;
       const message = messageInput.value.trim();
       if (!message || isWaiting) return;
+
+      // 清除上一组追问按钮
+      document.querySelectorAll('.followup-area').forEach(el => el.remove());
 
       isWaiting = true;
       sendBtn.disabled = true;
       messageInput.value = '';
       messageInput.style.height = 'auto';
 
-      addMessage('user', message);
-      chatHistory.push({ role: 'user', content: message });
-      localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
-      showClearBtn();
+      if (!noUserBubble) {
+        addMessage('user', message);
+        chatHistory.push({ role: 'user', content: message });
+        localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
+        showClearBtn();
+      }
 
-      const botEl  = appendBotPlaceholder();
+      const botEl  = existingBotEl || appendBotPlaceholder();
+      botEl.dataset.userMsg = message; // 供重新生成使用
       const bubble = botEl.querySelector('.bubble');
+      if (existingBotEl) {
+        bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+      }
 
-      let replyText    = '';   // 已收到的完整文本
-      let renderHandle = null; // 节流渲染句柄
+      let replyText    = '';
+      let renderHandle = null;
 
-      // 节流渲染：每50ms最多渲染一次，消除打字机停顿感
       function scheduleRender() {
-        if (renderHandle) return; // 本批50ms内已有待渲染任务
+        if (renderHandle) return;
         renderHandle = setTimeout(() => {
           renderHandle = null;
           bubble.innerHTML = renderMarkdown(replyText);
@@ -797,11 +980,37 @@
           }
         }
 
-        // 流结束：立即做最终渲染
         flushRender();
         if (replyText) {
-          chatHistory.push({ role: 'assistant', content: replyText });
+          // 重新生成时替换最后一条 assistant；否则追加
+          if (noUserBubble) {
+            const lastIdx = chatHistory.map(m => m.role).lastIndexOf('assistant');
+            if (lastIdx >= 0) chatHistory[lastIdx] = { role: 'assistant', content: replyText };
+            else chatHistory.push({ role: 'assistant', content: replyText });
+          } else {
+            chatHistory.push({ role: 'assistant', content: replyText });
+          }
           localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
+
+          // 追问按钮
+          const followups = [];
+          if (/学校|院校/.test(replyText)) {
+            followups.push('这些专业就业怎样', '还有哪些备选学校');
+          } else if (/专业/.test(replyText)) {
+            followups.push('普通家庭适合吗', '对应考研方向有哪些');
+          }
+          if (followups.length) {
+            const area = document.createElement('div');
+            area.className = 'followup-area';
+            followups.forEach(q => {
+              const btn = document.createElement('button');
+              btn.className = 'followup-btn';
+              btn.textContent = q;
+              btn.onclick = () => { messageInput.value = q; sendMessage(); };
+              area.appendChild(btn);
+            });
+            botEl.appendChild(area);
+          }
         }
 
       } catch (e) {
@@ -839,6 +1048,41 @@
       bubble.className = 'bubble';
       bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
       div.appendChild(bubble);
+
+      // 操作按钮区（悬停显示）
+      const actions = document.createElement('div');
+      actions.className = 'msg-actions';
+
+      // 复制按钮
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'msg-action-btn';
+      copyBtn.textContent = '📋 复制';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(bubble.innerText).then(() => {
+          copyBtn.textContent = '✅ 已复制';
+          setTimeout(() => { copyBtn.textContent = '📋 复制'; }, 2000);
+        }).catch(() => {});
+      };
+      actions.appendChild(copyBtn);
+
+      // 重新生成按钮
+      const regenBtn = document.createElement('button');
+      regenBtn.className = 'msg-action-btn';
+      regenBtn.textContent = '🔄';
+      regenBtn.title = '重新生成';
+      regenBtn.onclick = () => {
+        if (isWaiting) return;
+        const userMsg = div.dataset.userMsg;
+        if (!userMsg) return;
+        // 从历史中移除最后一条 assistant 消息
+        const lastIdx = chatHistory.map(m => m.role).lastIndexOf('assistant');
+        if (lastIdx >= 0) chatHistory.splice(lastIdx, 1);
+        messageInput.value = userMsg;
+        sendMessage({ noUserBubble: true, existingBotEl: div });
+      };
+      actions.appendChild(regenBtn);
+
+      div.appendChild(actions);
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
       return div;
@@ -964,6 +1208,13 @@
         return `<p>${para.replace(/\n/g, '<br>')}</p>`;
       }).join('');
 
+      // 学校名可点击跳转查询
+      const _sStop = new Set(['哪些大学','什么大学','哪所大学','哪个大学','好大学','名牌大学','重点大学','哪些学院','什么学院']);
+      html = html.replace(/[一-龥]{2,8}(?:大学|学院)/g, (m) => {
+        if (_sStop.has(m) || m.length < 4) return m;
+        return `<span class="school-link" onclick="jumpToSchoolQuery('${m.replace(/'/g, "\\'")}')">` + m + '</span>';
+      });
+
       return html;
     }
 
@@ -994,6 +1245,96 @@
       }
     }
 
+    // ==================== 历史对话管理 ====================
+    function toggleDrawer() {
+      const drawer  = document.getElementById('historyDrawer');
+      const overlay = document.getElementById('drawerOverlay');
+      drawer.classList.toggle('open');
+      overlay.classList.toggle('open');
+      if (drawer.classList.contains('open')) renderHistoryList();
+    }
+
+    function saveCurrentChatToHistory() {
+      if (chatHistory.length === 0) return;
+      const firstUser = chatHistory.find(m => m.role === 'user');
+      if (!firstUser) return;
+      localStorage.setItem('gaokao_history_' + Date.now(), JSON.stringify({
+        timestamp: Date.now(),
+        preview:   firstUser.content.slice(0, 40),
+        messages:  chatHistory
+      }));
+    }
+
+    function startNewChat() {
+      clearChat(); // clearChat 内部已调用 saveCurrentChatToHistory
+      toggleDrawer();
+    }
+
+    function renderHistoryList() {
+      const list = document.getElementById('historyList');
+      const keys = Object.keys(localStorage)
+        .filter(k => k.startsWith('gaokao_history_'))
+        .sort((a, b) => b.localeCompare(a));
+      if (keys.length === 0) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:#aaa;font-size:13px">暂无历史对话</div>';
+        return;
+      }
+      const groups = {};
+      for (const key of keys) {
+        try {
+          const d = JSON.parse(localStorage.getItem(key));
+          const dt = new Date(d.timestamp);
+          const ds = `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+          if (!groups[ds]) groups[ds] = [];
+          groups[ds].push({ key, preview: d.preview || '对话' });
+        } catch {}
+      }
+      let html = '';
+      for (const [date, items] of Object.entries(groups)) {
+        html += `<div class="history-date-group">${date}</div>`;
+        for (const it of items) {
+          html += `<div class="history-item" onclick="loadHistoryEntry('${it.key}')">
+            <span class="history-item-text">${escHtml(it.preview.slice(0,20))}</span>
+            <span class="history-item-del" onclick="event.stopPropagation();deleteHistoryEntry('${it.key}')">🗑</span>
+          </div>`;
+        }
+      }
+      list.innerHTML = html;
+    }
+
+    function loadHistoryEntry(key) {
+      try {
+        const data = JSON.parse(localStorage.getItem(key));
+        if (!data || !data.messages) return;
+        saveCurrentChatToHistory();
+        clearChat();
+        chatHistory = data.messages;
+        localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
+        chatHistory.forEach(msg => {
+          if (msg.role === 'user') {
+            addMessage('user', msg.content);
+          } else if (msg.role === 'assistant') {
+            const el = appendBotPlaceholder();
+            el.querySelector('.bubble').innerHTML = renderMarkdown(msg.content);
+          }
+        });
+        if (chatHistory.length) showClearBtn();
+        toggleDrawer();
+      } catch {}
+    }
+
+    function deleteHistoryEntry(key) {
+      localStorage.removeItem(key);
+      renderHistoryList();
+    }
+
+    // ==================== 深色模式 ====================
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark');
+      localStorage.setItem('gaokao_dark', isDark ? '1' : '0');
+      document.querySelector('.dark-btn').textContent = isDark ? '☀️' : '🌙';
+    }
+
     // 恢复本地存储的对话历史
     try {
       const _saved = localStorage.getItem('gaokao_chat');
@@ -1011,6 +1352,13 @@
       }
     } catch {}
     checkConfig();
+
+    // 初始化深色模式
+    if (localStorage.getItem('gaokao_dark') === '1') {
+      document.body.classList.add('dark');
+    }
+    document.querySelector('.dark-btn').textContent =
+      document.body.classList.contains('dark') ? '☀️' : '🌙';
   </script>
 </body>
 </html>
