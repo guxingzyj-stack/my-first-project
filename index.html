@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>高考志愿咨询</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -457,6 +457,8 @@
         <span>我的分数：</span>
         <input type="number" id="qMyScore" placeholder="如 580" min="0" max="900"
           oninput="syncMyScore()" title="填入后自动标注冲稳保">
+        <input type="number" id="qMyRank" placeholder="我的位次（如 15000）" min="1"
+          oninput="syncMyScore()" style="width:160px">
         <span style="color:#aaa;font-size:12px">填入后自动标注冲稳保</span>
       </div>
     </div>
@@ -573,7 +575,16 @@
       }
     }
 
-    function calcTag(myScore, minScore) {
+    function calcTag(myScore, minScore, myRank, minRank) {
+      // 优先用位次判断（位次越小越好）
+      if (myRank && minRank) {
+        const diff = minRank - myRank; // 正数=我排名更靠前
+        if (diff < 0)     return '<span class="tag tag-low">偏低</span>';
+        if (diff <= 2000) return '<span class="tag tag-rush">冲</span>';
+        if (diff <= 8000) return '<span class="tag tag-match">稳</span>';
+        return '<span class="tag tag-safe">保</span>';
+      }
+      // 降级用分数判断
       if (!myScore || !minScore) return '';
       const diff = myScore - minScore;
       if (diff < 0)   return '<span class="tag tag-low">偏低</span>';
@@ -599,13 +610,14 @@
         return;
       }
       const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
+      const myRank  = parseInt(document.getElementById('qMyRank').value)  || 0;
       const totalPages = Math.ceil(total / pageSize);
       let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#7c3aed">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
       const showTag = myScore > 0;
       html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}</tr></thead><tbody>`;
       for (const r of rows) {
-        const tag = showTag ? calcTag(myScore, r.min_score) : '';
+        const tag = showTag ? calcTag(myScore, r.min_score, myRank, r.min_rank) : '';
         html += `<tr>
           <td style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
           <td style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
@@ -672,6 +684,20 @@
 
     // ---- 功能卡片 ----
     function askFeature(text) {
+      const p = getUserProfile();
+      if (!p.province && !p.subject && !p.score) {
+        toggleProfile();
+        if (!document.querySelector('.profile-warn')) {
+          const hint = document.querySelector('.profile-hint');
+          const warn = document.createElement('div');
+          warn.className = 'profile-warn';
+          warn.style.cssText = 'color:#e74c3c;font-size:12px;margin-top:6px;';
+          warn.textContent = '请先填写省份和分数，AI 才能给出针对你的分析';
+          hint.insertAdjacentElement('afterend', warn);
+          setTimeout(() => warn.remove(), 3000);
+        }
+        return;
+      }
       messageInput.value = text;
       messageInput.style.height = 'auto';
       messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
@@ -683,6 +709,7 @@
       chatArea.innerHTML = '';
       chatHistory = [];
       clearBtnArea.innerHTML = '';
+      localStorage.removeItem('gaokao_chat');
     }
 
     function showClearBtn() {
@@ -702,6 +729,7 @@
 
       addMessage('user', message);
       chatHistory.push({ role: 'user', content: message });
+      localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
       showClearBtn();
 
       const botEl  = appendBotPlaceholder();
@@ -771,7 +799,10 @@
 
         // 流结束：立即做最终渲染
         flushRender();
-        if (replyText) chatHistory.push({ role: 'assistant', content: replyText });
+        if (replyText) {
+          chatHistory.push({ role: 'assistant', content: replyText });
+          localStorage.setItem('gaokao_chat', JSON.stringify(chatHistory));
+        }
 
       } catch (e) {
         flushRender();
@@ -910,16 +941,17 @@
       html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
       html = html.replace(/\*(.+?)\*/g,     '<em>$1</em>');
 
-      // 有序列表
-      html = html.replace(/^\d+\. (.+)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>\n?)+/g, m => `<ol>${m}</ol>`);
-
-      // 无序列表
-      html = html.replace(/^[-*] (.+)$/gm, '<li>$1</li>');
-      html = html.replace(/(<li>.*<\/li>\n?)+/g, m => {
-        if (m.includes('<ol>')) return m;
-        return `<ul>${m}</ul>`;
-      });
+      // 有序列表：先标记为临时标签 <oli>，避免与无序列表的 <li> 混淆
+      html = html.replace(/^\d+\. (.+)$/gm, '<oli>$1</oli>');
+      // 无序列表：标记为临时标签 <uli>
+      html = html.replace(/^[-*] (.+)$/gm, '<uli>$1</uli>');
+      // 把连续 <oli> 块包裹成 <ol>
+      html = html.replace(/(<oli>.*<\/oli>\n?)+/g, m => `<ol>${m}</ol>`);
+      // 把连续 <uli> 块包裹成 <ul>
+      html = html.replace(/(<uli>.*<\/uli>\n?)+/g, m => `<ul>${m}</ul>`);
+      // 把临时标签统一替换为 <li>
+      html = html.replace(/<oli>/g, '<li>').replace(/<\/oli>/g, '</li>');
+      html = html.replace(/<uli>/g, '<li>').replace(/<\/uli>/g, '</li>');
 
       // 分隔线
       html = html.replace(/^---+$/gm, '<hr>');
@@ -962,6 +994,22 @@
       }
     }
 
+    // 恢复本地存储的对话历史
+    try {
+      const _saved = localStorage.getItem('gaokao_chat');
+      if (_saved) {
+        chatHistory = JSON.parse(_saved);
+        chatHistory.forEach(msg => {
+          if (msg.role === 'user') {
+            addMessage('user', msg.content);
+          } else if (msg.role === 'assistant') {
+            const el = appendBotPlaceholder();
+            el.querySelector('.bubble').innerHTML = renderMarkdown(msg.content);
+          }
+        });
+        if (chatHistory.length) showClearBtn();
+      }
+    } catch {}
     checkConfig();
   </script>
 </body>
