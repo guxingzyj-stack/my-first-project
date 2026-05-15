@@ -30,6 +30,7 @@ const CONSEC_OK_TO_SPEEDUP = 20; // 连续成功N次才降速
 
 // 参数解析
 const args     = process.argv.slice(2);
+const isTest   = args.includes('--test');
 const isResume = args.includes('--resume');
 const isForce  = args.includes('--force');
 const yearsArg = (args.find(a => a.startsWith('--years=')) || '').replace('--years=', '');
