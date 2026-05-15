@@ -850,7 +850,8 @@ const server = http.createServer(async (req, res) => {
       hasDb: !!db,
       dbRowCount,
       llmModel: LLM_MODEL,
-      embeddingModel: EMBEDDING_MODEL
+      embeddingModel: EMBEDDING_MODEL,
+      schoolNames: Object.keys(schoolTags).filter(k => !k.startsWith('_'))
     }));
     return;
   }
