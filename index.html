@@ -55,11 +55,23 @@
       background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
       background-image: url('/static/slogan-illustration.png');
       background-repeat: no-repeat;
-      background-position: right top;
-      background-size: 55% auto;
+      background-position: center center;
+      background-size: cover;
       flex-shrink: 0;
       overflow: hidden;
     }
+    /* 全尺寸遮罩：让文字在图片上清晰可读 */
+    #heroSection::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: rgba(235,243,251,0.55);
+      pointer-events: none;
+    }
+    body.dark #heroSection::before { background: rgba(22,35,51,0.70); }
+    /* hero 内文字层级高于遮罩 */
+    #heroSection .header,
+    #heroSection #sloganBar { position: relative; z-index: 1; }
+
     body.dark #heroSection {
       background-color: #162333;
       background-image: url('/static/slogan-illustration.png');
