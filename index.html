@@ -994,6 +994,10 @@
         chatInputArea.style.display = '';
         tabChat.classList.add('active');
         tabData.classList.remove('active');
+        setTimeout(() => {
+          chatInputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
+          document.getElementById('messageInput').focus();
+        }, 100);
       } else {
         chatPanel.classList.add('hidden');
         queryPanel.classList.add('active');
