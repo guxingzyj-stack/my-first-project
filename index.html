@@ -122,52 +122,51 @@
       overflow: hidden;
     }
     .profile-header {
-      display: flex; align-items: center; gap: 12px;
-      padding: 14px 16px 10px; user-select: none;
+      display: flex; align-items: center; gap: 14px;
+      padding: 14px 16px; user-select: none;
     }
     .profile-avatar {
-      width: 64px; height: 64px; border-radius: 50%;
+      width: 72px; height: 72px; border-radius: 50%;
       background: var(--primary-light);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 28px; flex-shrink: 0;
-      overflow: hidden;
-      border: 2px solid var(--primary-dim);
+      overflow: hidden; flex-shrink: 0;
     }
     .profile-avatar img {
       width: 100%; height: 100%;
-      object-fit: cover; object-position: center top;
+      object-fit: cover; object-position: center center;
       display: block;
     }
     .profile-header-info {
-      flex: 1; display: flex; flex-direction: column; gap: 2px;
+      flex: 1; display: flex; flex-direction: column; gap: 8px;
+    }
+    .profile-top-row {
+      display: flex; align-items: center; justify-content: space-between;
     }
     .profile-greeting {
-      font-size: 15px; font-weight: 700; color: var(--text);
+      font-size: 16px; font-weight: 700; color: var(--text);
     }
     .profile-header-badge {
       background: #aaa; color: #fff;
       font-size: 11px; padding: 2px 7px; border-radius: 10px;
     }
     .profile-edit-btn {
-      font-size: 13px; color: var(--primary); background: none;
+      font-size: 12px; color: var(--primary); background: none;
       border: 1px solid var(--primary-dim); border-radius: 6px;
-      padding: 4px 10px; cursor: pointer; flex-shrink: 0;
+      padding: 3px 10px; cursor: pointer; flex-shrink: 0;
     }
     .profile-edit-btn:hover { background: var(--primary-light); }
-    /* 3列数据常驻显示 */
+    /* 3列数据：在右侧列内部，无外边框 */
     .profile-summary {
-      display: flex; padding: 0 16px 12px;
-      border-top: 1px solid var(--border);
+      display: flex;
     }
     .profile-summary-item {
-      flex: 1; text-align: center; padding: 8px 4px;
+      flex: 1; text-align: center;
       border-right: 1px solid var(--border);
     }
     .profile-summary-item:last-child { border-right: none; }
-    .profile-summary-label { font-size: 11px; color: var(--text-light); margin-bottom: 4px; }
-    .profile-summary-value { font-size: 15px; font-weight: 700; color: var(--text); }
+    .profile-summary-label { font-size: 11px; color: var(--text-light); margin-bottom: 3px; }
+    .profile-summary-value { font-size: 14px; font-weight: 700; color: var(--text); }
     .profile-arrow { display: none; }
-    .profile-form { padding: 0 16px 14px; display: none; }
+    .profile-form { padding: 0 16px 14px; display: none; border-top: 1px solid var(--border); }
     .profile-form.open { display: block; }
     .profile-row { display: flex; gap: 10px; margin-bottom: 10px; }
     .profile-row:last-child { margin-bottom: 0; }
@@ -758,29 +757,33 @@
   <!-- 考生信息面板 -->
   <div class="profile-panel">
     <div class="profile-header">
+      <!-- 左：头像 -->
       <div class="profile-avatar">
         <img src="/static/avatar-student.png" alt="头像" onerror="this.style.display='none';this.parentNode.textContent='🧑‍🎓'">
       </div>
+      <!-- 右：上行问候+编辑，下行三列数据 -->
       <div class="profile-header-info">
-        <span class="profile-greeting">你好，同学</span>
-        <span class="profile-header-badge" id="profileBadge" style="display:none">未填写</span>
+        <div class="profile-top-row">
+          <span class="profile-greeting">你好，同学</span>
+          <button class="profile-edit-btn" onclick="toggleProfile()">✏️ 编辑</button>
+        </div>
+        <div class="profile-summary" id="profileSummary">
+          <div class="profile-summary-item">
+            <div class="profile-summary-label">省份</div>
+            <div class="profile-summary-value" id="sumProvince">—</div>
+          </div>
+          <div class="profile-summary-item">
+            <div class="profile-summary-label">科类</div>
+            <div class="profile-summary-value" id="sumSubject">—</div>
+          </div>
+          <div class="profile-summary-item">
+            <div class="profile-summary-label">高考分数</div>
+            <div class="profile-summary-value" id="sumScore">—</div>
+          </div>
+        </div>
       </div>
-      <button class="profile-edit-btn" onclick="toggleProfile()">✏️ 编辑</button>
+      <span class="profile-header-badge" id="profileBadge" style="display:none">未填写</span>
       <span class="profile-arrow" id="profileArrow" style="display:none">▼</span>
-    </div>
-    <div class="profile-summary" id="profileSummary">
-      <div class="profile-summary-item">
-        <div class="profile-summary-label">省份</div>
-        <div class="profile-summary-value" id="sumProvince">—</div>
-      </div>
-      <div class="profile-summary-item">
-        <div class="profile-summary-label">科类</div>
-        <div class="profile-summary-value" id="sumSubject">—</div>
-      </div>
-      <div class="profile-summary-item">
-        <div class="profile-summary-label">高考分数</div>
-        <div class="profile-summary-value" id="sumScore">—</div>
-      </div>
     </div>
     <div class="profile-form" id="profileForm">
       <div class="profile-row">
