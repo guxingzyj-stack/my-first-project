@@ -49,12 +49,29 @@
       flex-direction: column;
     }
 
+    /* ===== Hero 区（header + statusBar + sloganBar 共用插图）===== */
+    #heroSection {
+      position: relative;
+      background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
+      background-image: url('/static/slogan-illustration.png');
+      background-repeat: no-repeat;
+      background-position: right top;
+      background-size: 55% auto;
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+    body.dark #heroSection {
+      background-color: #162333;
+      background-image: url('/static/slogan-illustration.png');
+    }
+
     /* 顶部导航 */
     .header {
-      padding: 20px 20px 16px;
+      padding: 20px 20px 4px;
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
+      background: transparent;
     }
     .header-center {
       display: flex;
@@ -549,18 +566,13 @@
     }
     .ask-ai-btn:hover { background: var(--primary-dim); }
 
-    /* ===== sloganBar ===== */
+    /* ===== sloganBar（背景已移至 #heroSection，此处仅文字布局）===== */
     #sloganBar {
       position: relative;
-      background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
-      background-image: url('/static/slogan-illustration.png');
-      background-repeat: no-repeat;
-      background-position: right center;
-      background-size: contain;
-      min-height: 220px;
-      padding: 32px 52% 32px 24px;
+      padding: 12px 52% 32px 24px;
       display: flex; flex-direction: column; justify-content: center;
       flex-shrink: 0;
+      min-height: 160px;
     }
     #sloganBar .slogan-title {
       font-size: var(--font-large); font-weight: 700;
@@ -569,31 +581,30 @@
     #sloganBar .slogan-sub {
       font-size: var(--font-small); color: var(--text-light); line-height: 1.6;
     }
-    body.dark #sloganBar {
-      background-color: #162333;
-      background-image: url('/static/slogan-illustration.png');
-    }
     @media (max-width: 599px) {
-      #sloganBar {
-        background-position: center center;
-        background-size: cover;
-        padding: 28px 20px;
-        min-height: 180px;
+      #heroSection {
+        background-position: right -20px top;
+        background-size: 70% auto;
       }
-      #sloganBar::before {
+      #heroSection::before {
         content: '';
         position: absolute; inset: 0;
-        background: rgba(235,243,251,0.72);
+        background: rgba(235,243,251,0.60);
+        pointer-events: none;
       }
-      body.dark #sloganBar::before { background: rgba(22,35,51,0.78); }
-      #sloganBar > * { position: relative; z-index: 1; }
+      body.dark #heroSection::before { background: rgba(22,35,51,0.72); }
+      #sloganBar {
+        padding: 8px 20px 28px;
+        min-height: 130px;
+      }
+      #sloganBar .slogan-title, #sloganBar .slogan-sub,
+      .header-title, .header-icon { position: relative; z-index: 1; }
     }
     @media (max-width: 399px) {
-      #sloganBar {
+      #heroSection {
         background-image: none;
-        min-height: 140px;
-        padding: 24px 20px;
       }
+      #sloganBar { min-height: 110px; padding: 8px 20px 24px; }
     }
 
     /* ===== dataSourceBar ===== */
@@ -712,25 +723,24 @@
   </div>
   <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
 
-  <!-- 顶部导航 -->
-  <div class="header">
-    <button class="menu-btn" onclick="toggleDrawer()" title="历史对话">📋</button>
-    <div class="header-center">
-      <div class="header-icon">📚</div>
-      <span class="header-title">助你报志愿</span>
+  <!-- Hero 区：header + statusBar + sloganBar 共用插图背景 -->
+  <div id="heroSection">
+    <!-- 顶部导航 -->
+    <div class="header">
+      <div class="header-center">
+        <div class="header-icon">📚</div>
+        <span class="header-title">助你报志愿</span>
+      </div>
     </div>
-    <div style="display:flex;gap:4px;align-items:center">
-      <button class="dark-btn" onclick="toggleDarkMode()" title="切换深色模式">🌙</button>
+
+    <!-- 状态栏 -->
+    <div class="status-bar" id="statusBar">检查系统状态...</div>
+
+    <!-- Slogan 区（A2）-->
+    <div id="sloganBar">
+      <div class="slogan-title">每个孩子都值得一份<br>靠谱的志愿建议</div>
+      <div class="slogan-sub">公益项目 · 不收一分钱 · 数据来自官方</div>
     </div>
-  </div>
-
-  <!-- 状态栏 -->
-  <div class="status-bar" id="statusBar">检查系统状态...</div>
-
-  <!-- Slogan 区（A2）-->
-  <div id="sloganBar">
-    <div class="slogan-title">每个孩子都值得一份<br>靠谱的志愿建议</div>
-    <div class="slogan-sub">公益项目 · 不收一分钱 · 数据来自官方</div>
   </div>
 
   <!-- 数据来源条（A3）-->
