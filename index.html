@@ -56,18 +56,17 @@
       background-image: url('/static/slogan-illustration.png');
       background-repeat: no-repeat;
       background-position: center center;
-      background-size: cover;
+      background-size: 100% auto;
       flex-shrink: 0;
       overflow: hidden;
     }
-    /* 全尺寸遮罩：让文字在图片上清晰可读 */
-    #heroSection::before {
+    /* 深色模式遮罩（浅色模式图片本身已够亮，不加遮罩）*/
+    body.dark #heroSection::before {
       content: '';
       position: absolute; inset: 0;
-      background: rgba(235,243,251,0.45);
+      background: rgba(22,35,51,0.50);
       pointer-events: none;
     }
-    body.dark #heroSection::before { background: rgba(22,35,51,0.70); }
     /* hero 内文字层级高于遮罩 */
     #heroSection .header,
     #heroSection #sloganBar { position: relative; z-index: 1; }
@@ -595,22 +594,13 @@
     }
     @media (max-width: 599px) {
       #heroSection {
-        background-position: right -20px top;
-        background-size: 70% auto;
+        background-position: center center;
+        background-size: 100% auto;
       }
-      #heroSection::before {
-        content: '';
-        position: absolute; inset: 0;
-        background: rgba(235,243,251,0.60);
-        pointer-events: none;
-      }
-      body.dark #heroSection::before { background: rgba(22,35,51,0.72); }
       #sloganBar {
         padding: 8px 20px 28px;
         min-height: 130px;
       }
-      #sloganBar .slogan-title, #sloganBar .slogan-sub,
-      .header-title, .header-icon { position: relative; z-index: 1; }
     }
     @media (max-width: 399px) {
       #heroSection {
