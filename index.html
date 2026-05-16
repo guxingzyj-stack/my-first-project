@@ -5,11 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>高考志愿咨询</title>
   <style>
+    /* ===== CSS 变量 ===== */
+    :root {
+      --primary:        #2C5F8D;
+      --primary-dark:   #1a4a6e;
+      --primary-light:  #EBF3FB;
+      --primary-dim:    #DAEAF6;
+      --gradient:       linear-gradient(135deg, #2C5F8D 0%, #1a4a6e 100%);
+      --accent:         #E8B547;
+      --warning:        #C0392B;
+      --bg:             #F8F9FA;
+      --card:           #FFFFFF;
+      --text:           #2C3E50;
+      --text-light:     #7F8C8D;
+      --border:         #E8ECEF;
+      --font-base:      16px;
+      --font-small:     14px;
+      --font-large:     22px;
+      --radius:         14px;
+      --shadow:         0 2px 8px rgba(0,0,0,0.06);
+    }
+    body.dark {
+      --primary:        #5B8FBF;
+      --primary-dark:   #3a6a9f;
+      --primary-light:  #1a3a5c;
+      --primary-dim:    #15304e;
+      --bg:             #1a1a2e;
+      --card:           #2d2d44;
+      --text:           #e0e0e0;
+      --text-light:     #aaa;
+      --border:         #444;
+    }
+
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-      background: linear-gradient(180deg, #e8f4f8 0%, #f0e6ff 50%, #e6f0ff 100%);
+      background: var(--bg);
+      color: var(--text);
+      font-size: var(--font-base);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
@@ -30,14 +64,15 @@
     }
     .header-icon {
       width: 80px; height: 80px;
-      background: #7c3aed;
+      background: var(--primary);
       border-radius: 20px;
       display: flex; align-items: center; justify-content: center;
       font-size: 44px;
-      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      box-shadow: 0 6px 20px rgba(44,95,141,0.35);
     }
-    .header-title { font-size: 28px; color: #7c3aed; font-weight: 700; }
-    .menu-btn { font-size: 24px; color: #666; cursor: pointer; padding: 8px; }
+    .header-title { font-size: 28px; color: var(--primary); font-weight: 700; }
+    .menu-btn { font-size: 24px; color: #666; cursor: pointer; padding: 8px;
+                background: none; border: none; }
 
     /* 主内容 */
     .main-content { flex: 1; overflow-y: auto; padding: 0 20px 20px; }
@@ -47,24 +82,45 @@
 
     /* 考生信息面板 */
     .profile-panel {
-      background: #fff;
-      border-radius: 12px;
-      margin-bottom: 16px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      background: var(--card);
+      border-radius: var(--radius);
+      margin: 12px 20px 0;
+      box-shadow: var(--shadow);
       overflow: hidden;
     }
     .profile-header {
       display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 16px; cursor: pointer; user-select: none;
+      padding: 14px 16px; cursor: pointer; user-select: none;
     }
     .profile-header-left {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 14px; color: #555; font-weight: 500;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; color: var(--text); font-weight: 600;
+    }
+    .profile-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
     }
     .profile-header-badge {
       background: #aaa; color: #fff;
       font-size: 11px; padding: 2px 7px; border-radius: 10px;
+      font-weight: 400;
     }
+    /* 折叠态横向 3 列速览 */
+    .profile-summary {
+      display: flex; gap: 0; padding: 0 16px 12px;
+      border-top: 1px solid var(--border);
+    }
+    .profile-summary-item {
+      flex: 1; text-align: center; padding: 8px 4px;
+      border-right: 1px solid var(--border);
+    }
+    .profile-summary-item:last-child { border-right: none; }
+    .profile-summary-label { font-size: 11px; color: var(--text-light); margin-bottom: 3px; }
+    .profile-summary-value { font-size: 15px; font-weight: 700; color: var(--text); }
+    .profile-summary.hidden { display: none; }
+
     .profile-arrow { font-size: 12px; color: #999; transition: transform 0.2s; }
     .profile-arrow.open { transform: rotate(180deg); }
     .profile-form { padding: 0 16px 14px; display: none; }
@@ -77,15 +133,16 @@
       font-size: 14px; color: #333; background: #fafafa;
       outline: none; transition: border-color 0.2s;
     }
-    .profile-select:focus, .profile-input:focus { border-color: #7c3aed; background: #fff; }
+    .profile-select:focus, .profile-input:focus { border-color: var(--primary); background: #fff; }
     .profile-hint { font-size: 12px; color: #aaa; margin-top: 8px; }
 
     /* 免责说明条 */
     .disclaimer-bar {
       display: flex; align-items: center; justify-content: space-between;
-      background: #f7f7f7; padding: 7px 16px; gap: 12px;
-      font-size: 11.5px; color: #888; border-bottom: 1px solid #ebebeb;
+      background: #FDEBEC; padding: 7px 16px; gap: 12px;
+      font-size: 12px; color: #9b1c1c; border-bottom: 1px solid #fca5a5;
     }
+    body.dark .disclaimer-bar { background: #2d1515; color: #fca5a5; border-color: #5c2020; }
     .disclaimer-close {
       background: none; border: none; color: #bbb; cursor: pointer;
       font-size: 16px; padding: 0 4px; flex-shrink: 0; line-height: 1;
@@ -111,7 +168,7 @@
       font-size: 20px; flex-shrink: 0;
     }
     .icon-blue   { background: #e3f2fd; }
-    .icon-purple { background: #f3e5f5; }
+    .icon-purple { background: var(--primary-light); }
     .icon-yellow { background: #fff8e1; }
     .icon-green  { background: #e8f5e9; }
     .feature-text { font-size: 12px; color: #333; font-weight: 500; text-align: center; line-height: 1.4; }
@@ -136,7 +193,7 @@
       word-break: break-word; text-align: left;
     }
     .message.user .bubble {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--gradient);
       color: #fff; border-bottom-right-radius: 4px;
       white-space: pre-wrap;
     }
@@ -149,7 +206,7 @@
     /* Markdown 渲染样式 */
     .message.bot .bubble h3 {
       font-size: 14px; font-weight: 700; margin: 10px 0 4px;
-      color: #7c3aed;
+      color: var(--primary);
     }
     .message.bot .bubble h3:first-child { margin-top: 0; }
     .message.bot .bubble strong { font-weight: 700; color: #333; }
@@ -170,28 +227,28 @@
       font-size: 12px; margin-top: 6px;
     }
     .score-table th {
-      background: #f0ebff; color: #7c3aed;
+      background: var(--primary-light); color: var(--primary);
       padding: 5px 8px; text-align: left;
-      font-weight: 600; border-bottom: 2px solid #e0d4ff;
+      font-weight: 600; border-bottom: 2px solid var(--primary-dim);
     }
     .score-table td {
       padding: 5px 8px; border-bottom: 1px solid #f0f0f0;
       color: #444;
     }
     .score-table tr:last-child td { border-bottom: none; }
-    .score-table tr:hover td { background: #faf8ff; }
+    .score-table tr:hover td { background: var(--primary-light); }
     .score-count { font-size: 12px; color: #888; margin-bottom: 4px; }
 
     /* 来源折叠块 */
     .sources-block { margin-top: 8px; font-size: 12px; }
     .sources-toggle {
-      color: #7c3aed; cursor: pointer; user-select: none;
+      color: var(--primary); cursor: pointer; user-select: none;
       display: inline-flex; align-items: center; gap: 4px;
     }
     .sources-toggle:hover { text-decoration: underline; }
     .sources-list {
       display: none; margin-top: 6px; padding: 8px 10px;
-      background: #f5f0ff; border-radius: 8px;
+      background: var(--primary-light); border-radius: 8px;
       color: #666; line-height: 1.8;
     }
     .sources-list.open { display: block; }
@@ -235,11 +292,11 @@
     .input-box textarea::placeholder { color: #999; }
     .send-btn {
       width: 40px; height: 40px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--gradient);
       color: #fff; border: none; border-radius: 10px;
       font-size: 17px; cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 4px 12px rgba(102,126,234,0.3);
+      box-shadow: 0 4px 12px rgba(44,95,141,0.3);
       transition: opacity 0.2s;
     }
     .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -253,22 +310,48 @@
     .status-bar.ready { background: rgba(212,237,218,0.9); color: #155724; }
     .status-bar.error { background: rgba(248,215,218,0.9); color: #721c24; }
 
-    /* ===== Tab 导航 ===== */
-    .tab-bar {
-      display: flex; gap: 8px;
-      padding: 0 20px 12px; flex-shrink: 0;
+    /* ===== 导航卡片（替代原 Tab 导航）===== */
+    .nav-cards {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; padding: 14px 20px; flex-shrink: 0;
+      transition: all 0.3s ease;
     }
-    .tab-btn {
-      flex: 1; padding: 9px 0;
-      border: none; border-radius: 10px;
-      font-size: 14px; font-weight: 600; cursor: pointer;
-      transition: all 0.2s; background: rgba(255,255,255,0.6);
-      color: #888;
+    .nav-card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 16px 12px; display: flex; align-items: center; gap: 12px;
+      cursor: pointer; box-shadow: var(--shadow);
+      border: 2px solid transparent;
+      transition: all 0.2s ease; user-select: none;
     }
-    .tab-btn.active {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff; box-shadow: 0 4px 12px rgba(102,126,234,0.35);
+    .nav-card:hover { box-shadow: 0 4px 16px rgba(44,95,141,0.15); transform: translateY(-1px); }
+    .nav-card:active { transform: scale(0.97); }
+    .nav-card.active {
+      border-color: var(--primary);
+      box-shadow: 0 4px 16px rgba(44,95,141,0.25);
     }
+    .nav-card.disabled { opacity: 0.5; cursor: not-allowed; }
+    .nav-card.disabled:hover { transform: none; box-shadow: var(--shadow); }
+    .nav-card-icon { font-size: 28px; flex-shrink: 0; }
+    .nav-card-text { flex: 1; }
+    .nav-card-title { font-size: 15px; font-weight: 700; color: var(--text); line-height: 1.3; }
+    .nav-card-desc  { font-size: 12px; color: var(--text-light); margin-top: 2px; line-height: 1.4; }
+
+    /* 方案 Y: 有消息后(body.chat-active)折叠为 1×4 图标条 */
+    body.chat-active .nav-cards {
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px; padding: 8px 20px;
+    }
+    body.chat-active .nav-card {
+      flex-direction: column; gap: 4px;
+      padding: 8px 4px; border-radius: 10px;
+    }
+    body.chat-active .nav-card-icon { font-size: 20px; }
+    body.chat-active .nav-card-title { font-size: 11px; text-align: center; }
+    body.chat-active .nav-card-desc  { display: none; }
+
+    /* 保留原 .tab-btn 以防 JS 查询 active 类（switchTab 里用 classList.add/remove）*/
+    .tab-btn { display: none; }
+    .tab-btn.active { display: none; }
 
     /* ===== 数据查询面板 ===== */
     .query-panel { display: none; flex-direction: column; flex: 1; overflow: hidden; }
@@ -288,12 +371,12 @@
       font-size: 13px; color: #333; background: #fafafa;
       outline: none; transition: border-color 0.2s;
     }
-    .filter-select:focus, .filter-input:focus { border-color: #7c3aed; background: #fff; }
+    .filter-select:focus, .filter-input:focus { border-color: var(--primary); background: #fff; }
     .query-btn {
       padding: 8px 20px; border: none; border-radius: 8px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: var(--gradient);
       color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
-      box-shadow: 0 3px 10px rgba(102,126,234,0.3); white-space: nowrap;
+      box-shadow: 0 3px 10px rgba(44,95,141,0.3); white-space: nowrap;
       transition: opacity 0.2s;
     }
     .query-btn:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -312,16 +395,16 @@
       width: 100%; border-collapse: collapse; font-size: 13px;
     }
     .result-table th {
-      background: #f0ebff; color: #7c3aed; padding: 10px 10px;
+      background: var(--primary-light); color: var(--primary); padding: 10px 10px;
       text-align: left; font-weight: 600;
-      border-bottom: 2px solid #e0d4ff; white-space: nowrap;
+      border-bottom: 2px solid var(--primary-dim); white-space: nowrap;
     }
     .result-table td {
       padding: 9px 10px; border-bottom: 1px solid #f5f5f5;
       color: #444; vertical-align: top;
     }
     .result-table tr:last-child td { border-bottom: none; }
-    .result-table tr:hover td { background: #faf8ff; }
+    .result-table tr:hover td { background: var(--primary-light); }
     .score-highlight { color: #e74c3c; font-weight: 700; }
     .rank-text { color: #888; font-size: 12px; }
     /* 冲稳保标签 */
@@ -332,7 +415,7 @@
     .tag-low   { background: #fce4ec; color: #c62828; }
     /* 我的分数输入 */
     .my-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 20px 0; font-size: 13px; color: #555; }
-    .my-score-row input { width: 90px; padding: 5px 10px; border: 1.5px solid #e0d4ff; border-radius: 8px; font-size: 14px; text-align: center; }
+    .my-score-row input { width: 90px; padding: 5px 10px; border: 1.5px solid var(--primary-dim); border-radius: 8px; font-size: 14px; text-align: center; }
     .query-empty {
       text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px;
     }
@@ -341,33 +424,31 @@
       gap: 8px; padding: 12px 0;
     }
     .page-btn {
-      padding: 5px 12px; border: 1.5px solid #e0d4ff; border-radius: 6px;
-      background: #fff; color: #7c3aed; font-size: 13px; cursor: pointer;
+      padding: 5px 12px; border: 1.5px solid var(--primary-dim); border-radius: 6px;
+      background: #fff; color: var(--primary); font-size: 13px; cursor: pointer;
       transition: all 0.15s;
     }
-    .page-btn:hover { background: #f0ebff; }
-    .page-btn.cur { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+    .page-btn:hover { background: var(--primary-light); }
+    .page-btn.cur { background: var(--primary); color: #fff; border-color: var(--primary); }
     .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
     /* ===== 深色模式 ===== */
-    body.dark { background: #1a1a2e; }
-    body.dark .header-title { color: #a78bfa; }
     body.dark .menu-btn { color: #bbb; }
     body.dark .profile-panel, body.dark .feature-card,
-    body.dark .query-filters, body.dark .result-table-wrap { background: #2d2d44; }
+    body.dark .query-filters, body.dark .result-table-wrap { background: var(--card); }
     body.dark .profile-select, body.dark .profile-input,
-    body.dark .filter-select, body.dark .filter-input { background: #3a3a55; color: #e0e0e0; border-color: #555; }
+    body.dark .filter-select, body.dark .filter-input { background: #3a3a55; color: var(--text); border-color: var(--border); }
     body.dark .chat-area { background: rgba(255,255,255,0.05); }
-    body.dark .message.bot .bubble { background: #2d2d44; color: #e0e0e0; }
-    body.dark .message.bot .bubble h3 { color: #a78bfa; }
-    body.dark .message.bot .bubble strong { color: #e0e0e0; }
-    body.dark .input-box { background: #2d2d44; }
-    body.dark .input-box textarea { color: #e0e0e0; }
-    body.dark .welcome-text { color: #e0e0e0; }
+    body.dark .message.bot .bubble { background: var(--card); color: var(--text); }
+    body.dark .message.bot .bubble h3 { color: var(--primary); }
+    body.dark .message.bot .bubble strong { color: var(--text); }
+    body.dark .input-box { background: var(--card); }
+    body.dark .input-box textarea { color: var(--text); }
+    body.dark .welcome-text { color: var(--text); }
     body.dark .profile-header-left { color: #ccc; }
-    body.dark .result-table th { background: #3d2d5c; }
+    body.dark .result-table th { background: var(--primary-light); color: var(--primary); }
     body.dark .result-table td { color: #ccc; border-color: #3a3a55; }
-    body.dark .result-table tr:hover td { background: #3a3558; }
+    body.dark .result-table tr:hover td { background: var(--primary-dim); }
     body.dark .sources-list { background: #2a2a3e; color: #bbb; }
     body.dark .tab-btn { background: rgba(255,255,255,0.08); color: #bbb; }
     body.dark .status-bar { background: rgba(45,45,68,0.9); color: #bbb; }
@@ -375,7 +456,7 @@
     .dark-btn { font-size: 20px; cursor: pointer; padding: 8px; color: #666; background: none; border: none; }
 
     /* ===== 学校名可点击 ===== */
-    .school-link { color: #7c3aed; text-decoration: underline dotted; cursor: pointer; font-weight: 600; }
+    .school-link { color: var(--primary); text-decoration: underline dotted; cursor: pointer; font-weight: 600; }
     .school-link:hover { text-decoration: underline solid; }
 
     /* ===== 消息操作按钮（复制/重新生成）===== */
@@ -390,18 +471,18 @@
       background: #fff; border: 1px solid #eee;
       border-radius: 6px; padding: 2px 7px; transition: all 0.15s;
     }
-    .msg-action-btn:hover { color: #7c3aed; border-color: #c4b5fd; }
+    .msg-action-btn:hover { color: var(--primary); border-color: var(--primary-dim); }
     body.dark .msg-action-btn { background: #3d3d58; border-color: #555; color: #aaa; }
 
     /* ===== 追问按钮 ===== */
     .followup-area { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
     .followup-btn {
-      font-size: 12px; color: #7c3aed; cursor: pointer;
-      background: #f3e5f5; border: none; border-radius: 14px;
+      font-size: 12px; color: var(--primary); cursor: pointer;
+      background: var(--primary-light); border: none; border-radius: 14px;
       padding: 4px 12px; transition: background 0.15s;
     }
-    .followup-btn:hover { background: #e9d5ff; }
-    body.dark .followup-btn { background: #3d2d5c; color: #c4b5fd; }
+    .followup-btn:hover { background: var(--primary-dim); }
+    body.dark .followup-btn { background: var(--primary-light); color: var(--primary); }
 
     /* ===== 历史对话抽屉 ===== */
     .history-drawer {
@@ -420,10 +501,10 @@
     }
     body.dark .drawer-header { border-color: #333; }
     .drawer-new-btn {
-      font-size: 13px; color: #7c3aed; background: #f3e5f5;
+      font-size: 13px; color: var(--primary); background: var(--primary-light);
       border: none; border-radius: 8px; padding: 5px 10px; font-weight: 600; cursor: pointer;
     }
-    .drawer-new-btn:hover { background: #e9d5ff; }
+    .drawer-new-btn:hover { background: var(--primary-dim); }
     .drawer-close { font-size: 18px; cursor: pointer; color: #999; background: none; border: none; padding: 2px 6px; }
     .drawer-title { font-size: 14px; font-weight: 600; color: #333; }
     body.dark .drawer-title { color: #e0e0e0; }
@@ -433,8 +514,8 @@
       display: flex; align-items: center; padding: 9px 14px;
       cursor: pointer; gap: 8px; transition: background 0.15s;
     }
-    .history-item:hover { background: #f5f0ff; }
-    body.dark .history-item:hover { background: #2d2d44; }
+    .history-item:hover { background: var(--primary-light); }
+    body.dark .history-item:hover { background: var(--primary-dim); }
     .history-item-text {
       flex: 1; font-size: 13px; color: #333;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -450,37 +531,91 @@
     }
     .skeleton-cell {
       height: 14px; border-radius: 4px;
-      background: linear-gradient(90deg, #e0d4ff 25%, #f0ebff 50%, #e0d4ff 75%);
+      background: linear-gradient(90deg, var(--primary-dim) 25%, var(--primary-light) 50%, var(--primary-dim) 75%);
       background-size: 400px 100%;
       animation: shimmer 1.2s infinite linear;
     }
     body.dark .skeleton-cell {
-      background: linear-gradient(90deg, #3a3558 25%, #4a4568 50%, #3a3558 75%);
+      background: linear-gradient(90deg, #1a3a5c 25%, #234a72 50%, #1a3a5c 75%);
       background-size: 400px 100%;
     }
 
     /* ===== 数据查询"问AI"按钮 ===== */
     .ask-ai-btn {
-      font-size: 12px; color: #7c3aed; background: #f3e5f5;
+      font-size: 12px; color: var(--primary); background: var(--primary-light);
       border: none; border-radius: 8px; padding: 3px 8px;
       cursor: pointer; white-space: nowrap; transition: background 0.15s;
     }
-    .ask-ai-btn:hover { background: #e9d5ff; }
+    .ask-ai-btn:hover { background: var(--primary-dim); }
 
-    /* ===== 请喝咖啡 ===== */
-    .coffee-bar {
-      text-align: center; padding: 10px 16px 14px;
-      font-size: 12px; color: #bbb; line-height: 1.8;
+    /* ===== sloganBar ===== */
+    #sloganBar {
+      position: relative;
+      background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
+      background-image: url('/static/slogan-illustration.png');
+      background-repeat: no-repeat;
+      background-position: right center;
+      background-size: contain;
+      min-height: 220px;
+      padding: 32px 52% 32px 24px;
+      display: flex; flex-direction: column; justify-content: center;
       flex-shrink: 0;
+    }
+    #sloganBar .slogan-title {
+      font-size: var(--font-large); font-weight: 700;
+      color: var(--text); line-height: 1.4; margin-bottom: 8px;
+    }
+    #sloganBar .slogan-sub {
+      font-size: var(--font-small); color: var(--text-light); line-height: 1.6;
+    }
+    body.dark #sloganBar {
+      background-color: #162333;
+      background-image: url('/static/slogan-illustration.png');
+    }
+    @media (max-width: 599px) {
+      #sloganBar {
+        background-position: center center;
+        background-size: cover;
+        padding: 28px 20px;
+        min-height: 180px;
+      }
+      #sloganBar::before {
+        content: '';
+        position: absolute; inset: 0;
+        background: rgba(235,243,251,0.72);
+      }
+      body.dark #sloganBar::before { background: rgba(22,35,51,0.78); }
+      #sloganBar > * { position: relative; z-index: 1; }
+    }
+    @media (max-width: 399px) {
+      #sloganBar {
+        background-image: none;
+        min-height: 140px;
+        padding: 24px 20px;
+      }
+    }
+
+    /* ===== dataSourceBar ===== */
+    #dataSourceBar {
+      background: #FFF8E1; padding: 10px 16px;
+      font-size: var(--font-small); color: #7a6200;
+      border-bottom: 1px solid #FFE082; flex-shrink: 0;
+    }
+    body.dark #dataSourceBar { background: #2a2410; color: #c9a800; border-color: #443800; }
+
+    /* ===== 请喝咖啡（A7: 内容流，非 fixed）===== */
+    .coffee-bar {
+      text-align: center; padding: 8px 16px 12px;
+      font-size: 11px; color: #ccc; line-height: 1.8;
     }
     .coffee-bar a {
       color: #bbb; text-decoration: none; cursor: pointer;
       transition: color 0.15s;
     }
-    .coffee-bar a:hover { color: #7c3aed; }
+    .coffee-bar a:hover { color: var(--primary); }
     body.dark .coffee-bar { color: #555; }
     body.dark .coffee-bar a { color: #555; }
-    body.dark .coffee-bar a:hover { color: #a78bfa; }
+    body.dark .coffee-bar a:hover { color: var(--primary); }
 
     .coffee-overlay {
       display: none; position: fixed; inset: 0;
@@ -508,6 +643,59 @@
       background: none; border: none; line-height: 1; padding: 0;
     }
     .coffee-close:hover { color: #555; }
+
+    /* ===== A8: 心理援助固定底栏 ===== */
+    #crisisBar {
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
+      background: var(--warning); color: #fff;
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      padding: 10px 16px; font-size: 13px; cursor: pointer;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.2);
+    }
+    #crisisBar:hover { background: #a93226; }
+    #crisisBar .crisis-icon { font-size: 16px; flex-shrink: 0; }
+    #crisisBar .crisis-text { font-weight: 600; }
+    #crisisBar .crisis-hint { font-size: 11px; opacity: 0.85; }
+
+    /* 危机热线 Modal */
+    #crisisOverlay {
+      display: none; position: fixed; inset: 0; z-index: 400;
+      background: rgba(0,0,0,0.5);
+      align-items: center; justify-content: center;
+    }
+    #crisisOverlay.open { display: flex; }
+    #crisisModal {
+      background: #fff; border-radius: 16px; padding: 24px 24px 20px;
+      max-width: 360px; width: 92%; box-shadow: 0 8px 40px rgba(0,0,0,0.22);
+      position: relative;
+    }
+    body.dark #crisisModal { background: #1e1e30; color: #e0e0e0; }
+    #crisisModal h3 {
+      margin: 0 0 4px; font-size: 17px; color: var(--warning);
+      display: flex; align-items: center; gap: 8px;
+    }
+    #crisisModal .crisis-modal-sub {
+      font-size: 12px; color: var(--text-light); margin-bottom: 16px;
+    }
+    .crisis-hotline {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .crisis-hotline:last-of-type { border-bottom: none; }
+    .crisis-hotline-name { font-size: 13px; color: var(--text); }
+    .crisis-hotline-num {
+      font-size: 16px; font-weight: 700; color: var(--warning);
+      text-decoration: none; letter-spacing: 0.5px;
+    }
+    .crisis-hotline-num:hover { text-decoration: underline; }
+    #crisisModal .crisis-modal-close {
+      position: absolute; top: 14px; right: 16px;
+      font-size: 20px; color: #aaa; cursor: pointer;
+      background: none; border: none; line-height: 1;
+    }
+    #crisisModal .crisis-modal-close:hover { color: #555; }
+
+    body { padding-bottom: 50px; }
   </style>
 </head>
 <body>
@@ -527,21 +715,92 @@
   <div class="header">
     <button class="menu-btn" onclick="toggleDrawer()" title="历史对话">📋</button>
     <div class="header-center">
-      <div class="header-icon">🎓</div>
-      <span class="header-title">高考志愿咨询</span>
+      <div class="header-icon">📚</div>
+      <span class="header-title">助你报志愿</span>
     </div>
     <div style="display:flex;gap:4px;align-items:center">
       <button class="dark-btn" onclick="toggleDarkMode()" title="切换深色模式">🌙</button>
-      <div class="menu-btn">☰</div>
     </div>
   </div>
 
   <!-- 状态栏 -->
   <div class="status-bar" id="statusBar">检查系统状态...</div>
 
+  <!-- Slogan 区（A2）-->
+  <div id="sloganBar">
+    <div class="slogan-title">每个孩子都值得一份<br>靠谱的志愿建议</div>
+    <div class="slogan-sub">公益项目 · 不收一分钱 · 数据来自官方</div>
+  </div>
+
+  <!-- 数据来源条（A3）-->
+  <div id="dataSourceBar">📚 数据来源：阳光高考、各省教育考试院、学校官网</div>
+
+  <!-- 考生信息面板（A6: 移至 slogan→数据来源→学生信息→免责→导航卡 顺序）-->
+  <div class="profile-panel">
+    <div class="profile-header" onclick="toggleProfile()">
+      <div class="profile-header-left">
+        <div class="profile-avatar">🧑‍🎓</div>
+        你好，同学
+        <span class="profile-header-badge" id="profileBadge">未填写</span>
+      </div>
+      <span class="profile-arrow" id="profileArrow">▼</span>
+    </div>
+    <div class="profile-summary hidden" id="profileSummary">
+      <div class="profile-summary-item">
+        <div class="profile-summary-label">省份</div>
+        <div class="profile-summary-value" id="sumProvince">—</div>
+      </div>
+      <div class="profile-summary-item">
+        <div class="profile-summary-label">科类</div>
+        <div class="profile-summary-value" id="sumSubject">—</div>
+      </div>
+      <div class="profile-summary-item">
+        <div class="profile-summary-label">高考分数</div>
+        <div class="profile-summary-value" id="sumScore">—</div>
+      </div>
+    </div>
+    <div class="profile-form" id="profileForm">
+      <div class="profile-row">
+        <select class="profile-select" id="provinceSelect" onchange="updateProfileBadge()">
+          <option value="">选择省份</option>
+          <option>北京</option><option>天津</option><option>上海</option><option>重庆</option>
+          <option>河北</option><option>山西</option><option>辽宁</option><option>吉林</option>
+          <option>黑龙江</option><option>江苏</option><option>浙江</option><option>安徽</option>
+          <option>福建</option><option>江西</option><option>山东</option><option>河南</option>
+          <option>湖北</option><option>湖南</option><option>广东</option><option>海南</option>
+          <option>四川</option><option>贵州</option><option>云南</option><option>陕西</option>
+          <option>甘肃</option><option>青海</option><option>内蒙古</option><option>广西</option>
+          <option>西藏</option><option>宁夏</option><option>新疆</option>
+        </select>
+        <select class="profile-select" id="subjectSelect" onchange="updateProfileBadge()">
+          <option value="">选择科目</option>
+          <option>理科</option><option>文科</option>
+          <option>物理类</option><option>历史类</option>
+        </select>
+      </div>
+      <div class="profile-row">
+        <input class="profile-input" type="number" id="scoreInput"
+          placeholder="高考分数（如 580）" min="0" max="750"
+          oninput="updateProfileBadge()" style="flex:1">
+        <input class="profile-input" type="number" id="rankInput"
+          placeholder="省内位次（如 15000）" min="1"
+          oninput="updateProfileBadge()" style="flex:1">
+      </div>
+      <div class="profile-row">
+        <textarea class="profile-input" id="situationInput" rows="2"
+          placeholder="我的情况（选填）：比如喜欢数学、不想学医、想留在重庆、家里希望考公..."
+          style="width:100%;resize:none;font-family:inherit"></textarea>
+      </div>
+      <div class="profile-hint">填写后 AI 会基于你的实际情况分析，无需每次重复说明</div>
+    </div>
+  </div>
+
   <!-- 免责说明（可关闭，7天后自动恢复）-->
+  <!-- 完整文案保留于此注释，Phase C 移至"关于本项目"页：
+       本工具为公益项目，仅供参考。录取以阳光高考、各省教育考试院、学校官网为准。
+       重大决策请咨询学校老师或专业人员。 -->
   <div class="disclaimer-bar" id="disclaimerBar">
-    <span>⚠️ 本工具为公益项目，仅供参考。录取以阳光高考、各省教育考试院、学校官网为准。重大决策请咨询学校老师或专业人员。</span>
+    <span>⚠️ 仅供参考，最终以官方为准</span>
     <button class="disclaimer-close" onclick="closeDisclaimer()" title="关闭">×</button>
   </div>
 
@@ -550,64 +809,42 @@
     ⚠️ 测试模式 · 反馈不计入统计
   </div>
 
-  <!-- Tab 导航 -->
-  <div class="tab-bar">
-    <button class="tab-btn active" id="tabChat" onclick="switchTab('chat')">💬 智能咨询</button>
-    <button class="tab-btn" id="tabData" onclick="switchTab('data')">📊 数据查询</button>
+  <!-- 功能导航卡（替代原 Tab，id 保留供 JS 使用）-->
+  <div class="nav-cards">
+    <div class="nav-card active" id="tabChat" onclick="switchTab('chat')">
+      <span class="nav-card-icon">💬</span>
+      <div class="nav-card-text">
+        <div class="nav-card-title">AI 咨询</div>
+        <div class="nav-card-desc">用大白话问，用大白话答</div>
+      </div>
+    </div>
+    <div class="nav-card" id="tabData" onclick="switchTab('data')">
+      <span class="nav-card-icon">🔍</span>
+      <div class="nav-card-text">
+        <div class="nav-card-title">院校查询</div>
+        <div class="nav-card-desc">查分数、查位次、查专业</div>
+      </div>
+    </div>
+    <div class="nav-card disabled" onclick="alert('「我的方案」功能即将上线，敬请期待！')">
+      <span class="nav-card-icon">📋</span>
+      <div class="nav-card-text">
+        <div class="nav-card-title">我的方案</div>
+        <div class="nav-card-desc">保存你的志愿草稿</div>
+      </div>
+    </div>
+    <div class="nav-card" onclick="toggleDrawer()">
+      <span class="nav-card-icon">⏰</span>
+      <div class="nav-card-text">
+        <div class="nav-card-title">历史记录</div>
+        <div class="nav-card-desc">查看过往咨询</div>
+      </div>
+    </div>
   </div>
 
   <!-- 智能咨询面板 -->
   <div class="chat-panel" id="chatPanel">
   <!-- 主内容 -->
   <div class="main-content">
-
-    <!-- 欢迎文字 -->
-    <div class="welcome-text">欢迎使用 AI 高考志愿填报智能分析助手！</div>
-
-    <!-- 考生信息面板 -->
-    <div class="profile-panel">
-      <div class="profile-header" onclick="toggleProfile()">
-        <div class="profile-header-left">
-          📋 我的信息
-          <span class="profile-header-badge" id="profileBadge">未填写</span>
-        </div>
-        <span class="profile-arrow" id="profileArrow">▼</span>
-      </div>
-      <div class="profile-form" id="profileForm">
-        <div class="profile-row">
-          <select class="profile-select" id="provinceSelect" onchange="updateProfileBadge()">
-            <option value="">选择省份</option>
-            <option>北京</option><option>天津</option><option>上海</option><option>重庆</option>
-            <option>河北</option><option>山西</option><option>辽宁</option><option>吉林</option>
-            <option>黑龙江</option><option>江苏</option><option>浙江</option><option>安徽</option>
-            <option>福建</option><option>江西</option><option>山东</option><option>河南</option>
-            <option>湖北</option><option>湖南</option><option>广东</option><option>海南</option>
-            <option>四川</option><option>贵州</option><option>云南</option><option>陕西</option>
-            <option>甘肃</option><option>青海</option><option>内蒙古</option><option>广西</option>
-            <option>西藏</option><option>宁夏</option><option>新疆</option>
-          </select>
-          <select class="profile-select" id="subjectSelect" onchange="updateProfileBadge()">
-            <option value="">选择科目</option>
-            <option>理科</option><option>文科</option>
-            <option>物理类</option><option>历史类</option>
-          </select>
-        </div>
-        <div class="profile-row">
-          <input class="profile-input" type="number" id="scoreInput"
-            placeholder="高考分数（如 580）" min="0" max="750"
-            oninput="updateProfileBadge()" style="flex:1">
-          <input class="profile-input" type="number" id="rankInput"
-            placeholder="省内位次（如 15000）" min="1"
-            oninput="updateProfileBadge()" style="flex:1">
-        </div>
-        <div class="profile-row">
-          <textarea class="profile-input" id="situationInput" rows="2"
-            placeholder="我的情况（选填）：比如喜欢数学、不想学医、想留在重庆、家里希望考公..."
-            style="width:100%;resize:none;font-family:inherit"></textarea>
-        </div>
-        <div class="profile-hint">填写后 AI 会基于你的实际情况分析，无需每次重复说明</div>
-      </div>
-    </div>
 
     <!-- 功能卡片 -->
     <div class="feature-list">
@@ -632,6 +869,11 @@
     <!-- 聊天区域 -->
     <div id="clearBtnArea"></div>
     <div class="chat-area" id="chatArea"></div>
+
+    <!-- 请喝咖啡（A7: 挪入内容流底部，降低视觉权重）-->
+    <div class="coffee-bar">
+      项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()">请站长喝杯咖啡 ☕</a>
+    </div>
   </div>
 
   <!-- 底部输入 -->
@@ -644,11 +886,6 @@
   </div>
   </div><!-- end chat-panel -->
 
-  <!-- 请喝咖啡入口（底部小字）-->
-  <div class="coffee-bar">
-    项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()">请站长喝杯咖啡 ☕</a>
-  </div>
-
   <!-- 请喝咖啡 Modal -->
   <div class="coffee-overlay" id="coffeeOverlay" onclick="closeCoffeeModal(event)">
     <div class="coffee-modal">
@@ -657,7 +894,7 @@
       <p>项目完全公益，服务器费用自费<br>您的支持是坚持下去的动力 🙏</p>
       <div class="coffee-qrs">
         <div>
-          <img src="/static/coffee-wechat.png" alt="微信收款码" onerror="this.style.background='#f3e5f5'">
+          <img src="/static/coffee-wechat.png" alt="微信收款码" onerror="this.style.background='#EBF3FB'">
           <span>微信</span>
         </div>
         <div>
@@ -859,7 +1096,7 @@
       const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
       const myRank  = parseInt(document.getElementById('qMyRank').value)  || 0;
       const totalPages = Math.ceil(total / pageSize);
-      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#7c3aed">'+myScore+'</b>' : ''}</div>`;
+      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#2C5F8D">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
       const showTag = myScore > 0;
       html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th></th></tr></thead><tbody>`;
@@ -930,7 +1167,7 @@
       if (p.subject)  parts.push(p.subject);
       if (p.score)    parts.push(p.score + '分' + (p.rank ? '·位次' + p.rank : ''));
       badge.textContent = parts.length ? parts.join(' · ') : '未填写';
-      badge.style.background = parts.length ? '#7c3aed' : '#aaa';
+      badge.style.background = parts.length ? '#2C5F8D' : '#aaa';
       if (hint) {
         if (parts.length > 0) {
           hint.textContent = '✅ 已记录，后续回答将基于你的情况分析';
@@ -938,6 +1175,18 @@
         } else {
           hint.textContent = '填写后 AI 会基于你的实际情况分析，无需每次重复说明';
           hint.style.color  = '#aaa';
+        }
+      }
+      // 更新折叠态速览（A6）
+      const summary = document.getElementById('profileSummary');
+      if (summary) {
+        if (p.province || p.subject || p.score) {
+          summary.classList.remove('hidden');
+          document.getElementById('sumProvince').textContent = p.province || '—';
+          document.getElementById('sumSubject').textContent  = p.subject  || '—';
+          document.getElementById('sumScore').textContent    = p.score ? p.score + '分' : '—';
+        } else {
+          summary.classList.add('hidden');
         }
       }
     }
@@ -1002,6 +1251,7 @@
     // ---- 核心发送逻辑 ----
     // opts: { noUserBubble: bool, existingBotEl: Element }
     async function sendMessage(opts = {}) {
+      document.body.classList.add('chat-active'); // 方案Y: 折叠导航卡为图标条
       const { noUserBubble = false, existingBotEl = null } = opts;
       const message = messageInput.value.trim();
       if (!message || isWaiting) return;
@@ -1276,7 +1526,7 @@
           // 最低分和位次高亮
           const isScore = val.startsWith('最低分:') || val.startsWith('位次:');
           const display = val.replace('最低分:', '').replace('位次:', '');
-          tableHtml += `<td${isScore ? ' style="color:#7c3aed;font-weight:600"' : ''}>${escHtml(display)}</td>`;
+          tableHtml += `<td${isScore ? ' style="color:#2C5F8D;font-weight:600"' : ''}>${escHtml(display)}</td>`;
         }
         tableHtml += '</tr>';
       }
@@ -1586,8 +1836,50 @@
     }
     // ESC 键关闭
     document.addEventListener('keydown', function(e) {
-      if (e.key === 'Escape') document.getElementById('coffeeOverlay').classList.remove('open');
+      if (e.key === 'Escape') {
+        document.getElementById('coffeeOverlay').classList.remove('open');
+        document.getElementById('crisisOverlay').classList.remove('open');
+      }
     });
+
+    // ==================== A8: 心理危机热线 Modal ====================
+    function openCrisisModal() {
+      document.getElementById('crisisOverlay').classList.add('open');
+    }
+    function closeCrisisModal(e) {
+      if (!e || e.target === document.getElementById('crisisOverlay') || e.currentTarget.classList.contains('crisis-modal-close')) {
+        document.getElementById('crisisOverlay').classList.remove('open');
+      }
+    }
   </script>
+
+  <!-- A8: 心理援助固定底栏 -->
+  <div id="crisisBar" onclick="openCrisisModal()" role="button" tabindex="0" aria-label="心理援助热线">
+    <span class="crisis-icon">💙</span>
+    <span class="crisis-text">心理援助热线</span>
+    <span class="crisis-hint">如有需要，请拨打专业热线</span>
+  </div>
+
+  <!-- A8: 心理热线 Modal -->
+  <div id="crisisOverlay" onclick="closeCrisisModal(event)">
+    <div id="crisisModal">
+      <button class="crisis-modal-close" onclick="closeCrisisModal()" title="关闭">×</button>
+      <h3>💙 心理援助热线</h3>
+      <p class="crisis-modal-sub">如果你现在很难受，随时可以拨打下面的热线，有人会接听。</p>
+      <div class="crisis-hotline">
+        <span class="crisis-hotline-name">北京心理危机研究与干预中心</span>
+        <a class="crisis-hotline-num" href="tel:01082951332">010-82951332</a>
+      </div>
+      <div class="crisis-hotline">
+        <span class="crisis-hotline-name">希望 24 热线</span>
+        <a class="crisis-hotline-num" href="tel:4001619995">400-161-9995</a>
+      </div>
+      <div class="crisis-hotline">
+        <span class="crisis-hotline-name">抑郁援助热线</span>
+        <a class="crisis-hotline-num" href="tel:4009950008">400-995-0008</a>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
