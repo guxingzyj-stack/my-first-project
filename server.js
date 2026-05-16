@@ -1335,6 +1335,30 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // 敏感文件/目录黑名单（防止 .env / server.js 等被直接访问）
+  const BLOCKED_FILES = ['.env', '.env.example', 'server.js', 'package.json', 'package-lock.json'];
+  const BLOCKED_DIRS  = ['node_modules', 'data', '07_录取数据', '00_项目总控',
+                         '01_政策规则', '02_省份数据', '03_院校库', '04_专业库',
+                         '05_张雪峰风格库', '06_案例库', '08_提示词模板'];
+  if (BLOCKED_FILES.includes(path.basename(pathname)) ||
+      BLOCKED_DIRS.some(d => pathname === '/' + d || pathname.startsWith('/' + d + '/'))) {
+    res.writeHead(403); res.end("Forbidden"); return;
+  }
+
+  // /static/ 子路由：仅允许图片，basename() 防子目录穿越
+  if (pathname.startsWith('/static/')) {
+    const ALLOWED_IMG = ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.ico', '.gif'];
+    const imgExt = path.extname(pathname).toLowerCase();
+    if (!ALLOWED_IMG.includes(imgExt)) { res.writeHead(404); res.end("Not Found"); return; }
+    const staticFile = path.join(ROOT, 'static', path.basename(pathname));
+    if (fs.existsSync(staticFile) && fs.statSync(staticFile).isFile()) {
+      res.writeHead(200, { 'Content-Type': MIME_TYPES[imgExt] || 'application/octet-stream',
+                           'Cache-Control': 'public, max-age=86400' });
+      res.end(fs.readFileSync(staticFile));
+    } else { res.writeHead(404); res.end("Not Found"); }
+    return;
+  }
+
   // 静态文件服务
   let filePath = pathname === "/" ? "/index.html" : pathname;
   filePath = path.join(ROOT, filePath);
