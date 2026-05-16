@@ -664,12 +664,13 @@
     /* ===== A8: 心理援助固定底栏 ===== */
     #crisisBar {
       position: fixed; bottom: 0; left: 0; right: 0; z-index: 300;
-      background: #C0392B; color: #fff;
+      background: rgba(253,235,236,0.96);
+      border-top: 1.5px solid #C0392B;
+      color: #C0392B;
       display: flex; align-items: center; justify-content: center; gap: 8px;
-      padding: 12px 16px; font-size: 14px; cursor: pointer;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.25);
+      padding: 7px 16px; font-size: 14px; cursor: pointer;
     }
-    #crisisBar:hover { background: #a93226; }
+    #crisisBar:hover { background: rgba(249,215,217,0.98); }
     #crisisBar .crisis-icon { font-size: 17px; flex-shrink: 0; }
     #crisisBar .crisis-text { font-weight: 700; letter-spacing: 0.2px; }
     #crisisBar .crisis-hint { display: none; }
