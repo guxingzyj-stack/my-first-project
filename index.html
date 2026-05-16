@@ -49,32 +49,36 @@
       flex-direction: column;
     }
 
-    /* ===== Hero 区（header + statusBar + sloganBar 共用插图）===== */
+    /* ===== Hero 区（img 标签做背景，文字层绝对覆盖）===== */
     #heroSection {
       position: relative;
-      background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
-      background-image: url('/static/slogan-illustration.png');
-      background-repeat: no-repeat;
-      background-position: center center;
-      background-size: 100% auto;
       flex-shrink: 0;
       overflow: hidden;
+      background: linear-gradient(135deg, #EBF3FB 0%, #FDF6E3 100%);
     }
-    /* 深色模式遮罩（浅色模式图片本身已够亮，不加遮罩）*/
+    .hero-bg-img {
+      width: 100%;
+      height: auto;
+      display: block;
+      min-height: 260px;
+      object-fit: cover;
+      object-position: center center;
+    }
+    .hero-content {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      pointer-events: none;
+    }
+    .hero-content > * { pointer-events: auto; }
     body.dark #heroSection::before {
       content: '';
-      position: absolute; inset: 0;
+      position: absolute; inset: 0; z-index: 1;
       background: rgba(22,35,51,0.50);
       pointer-events: none;
     }
-    /* hero 内文字层级高于遮罩 */
-    #heroSection .header,
-    #heroSection #sloganBar { position: relative; z-index: 1; }
-
-    body.dark #heroSection {
-      background-color: #162333;
-      background-image: url('/static/slogan-illustration.png');
-    }
+    body.dark .hero-content { z-index: 2; }
 
     /* 顶部导航 */
     .header {
@@ -580,7 +584,7 @@
     /* ===== sloganBar（背景已移至 #heroSection，此处仅文字布局）===== */
     #sloganBar {
       position: relative;
-      padding: 12px 52% 32px 24px;
+      padding: 12px 160px 28px 20px;
       display: flex; flex-direction: column; justify-content: center;
       flex-shrink: 0;
       min-height: 160px;
@@ -592,21 +596,9 @@
     #sloganBar .slogan-sub {
       font-size: var(--font-small); color: var(--text-light); line-height: 1.6;
     }
-    @media (max-width: 599px) {
-      #heroSection {
-        background-position: center center;
-        background-size: 100% auto;
-      }
-      #sloganBar {
-        padding: 8px 20px 28px;
-        min-height: 130px;
-      }
-    }
     @media (max-width: 399px) {
-      #heroSection {
-        background-image: none;
-      }
-      #sloganBar { min-height: 110px; padding: 8px 20px 24px; }
+      .hero-bg-img { min-height: 200px; }
+      #sloganBar { padding: 4px 20px 20px; }
     }
 
     /* ===== dataSourceBar ===== */
@@ -725,20 +717,22 @@
   </div>
   <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
 
-  <!-- Hero 区：header + sloganBar 共用插图背景 -->
+  <!-- Hero 区：img 做背景，文字层压在左上角空白处 -->
   <div id="heroSection">
-    <!-- 顶部导航 -->
-    <div class="header">
-      <div class="header-center">
-        <div class="header-icon">📚</div>
-        <span class="header-title">助你报志愿</span>
+    <img src="/static/slogan-illustration.png" class="hero-bg-img" alt="">
+    <div class="hero-content">
+      <!-- 顶部导航 -->
+      <div class="header">
+        <div class="header-center">
+          <div class="header-icon">📚</div>
+          <span class="header-title">助你报志愿</span>
+        </div>
       </div>
-    </div>
-
-    <!-- Slogan 区（A2）-->
-    <div id="sloganBar">
-      <div class="slogan-title">每个孩子都值得一份<br>靠谱的志愿建议</div>
-      <div class="slogan-sub">公益项目 · 不收一分钱 · 数据来自官方</div>
+      <!-- Slogan 区（A2）-->
+      <div id="sloganBar">
+        <div class="slogan-title">每个孩子都值得一份<br>靠谱的志愿建议</div>
+        <div class="slogan-sub">公益项目 · 不收一分钱 · 数据来自官方</div>
+      </div>
     </div>
   </div>
 
