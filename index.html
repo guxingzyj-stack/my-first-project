@@ -126,10 +126,17 @@
       padding: 14px 16px 10px; user-select: none;
     }
     .profile-avatar {
-      width: 48px; height: 48px; border-radius: 50%;
+      width: 64px; height: 64px; border-radius: 50%;
       background: var(--primary-light);
       display: flex; align-items: center; justify-content: center;
       font-size: 28px; flex-shrink: 0;
+      overflow: hidden;
+      border: 2px solid var(--primary-dim);
+    }
+    .profile-avatar img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center top;
+      display: block;
     }
     .profile-header-info {
       flex: 1; display: flex; flex-direction: column; gap: 2px;
@@ -751,7 +758,9 @@
   <!-- 考生信息面板 -->
   <div class="profile-panel">
     <div class="profile-header">
-      <div class="profile-avatar">🧑‍🎓</div>
+      <div class="profile-avatar">
+        <img src="/static/avatar-student.png" alt="头像" onerror="this.style.display='none';this.parentNode.textContent='🧑‍🎓'">
+      </div>
       <div class="profile-header-info">
         <span class="profile-greeting">你好，同学</span>
         <span class="profile-header-badge" id="profileBadge" style="display:none">未填写</span>
