@@ -417,14 +417,16 @@
     .filter-row { display: flex; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
     .filter-row:last-child { margin-bottom: 0; }
     .filter-select, .filter-input {
-      flex: 1; min-width: 120px; padding: 8px 10px;
+      flex: 1; min-width: 90px; box-sizing: border-box;
+      height: 40px; padding: 0 10px;
       border: 1.5px solid #e0e0e0; border-radius: 8px;
       font-size: 13px; color: #333; background: #fafafa;
       outline: none; transition: border-color 0.2s;
+      font-family: inherit;
     }
     .filter-select:focus, .filter-input:focus { border-color: var(--primary); background: #fff; }
     .query-btn {
-      padding: 8px 20px; border: none; border-radius: 8px;
+      height: 40px; padding: 0 20px; border: none; border-radius: 8px;
       background: var(--gradient);
       color: #fff; font-size: 14px; font-weight: 600; cursor: pointer;
       box-shadow: 0 3px 10px rgba(44,95,141,0.3); white-space: nowrap;
@@ -465,8 +467,23 @@
     .tag-safe  { background: #e3f2fd; color: #1565c0; }
     .tag-low   { background: #fce4ec; color: #c62828; }
     /* 我的分数输入 */
-    .my-score-row { display: flex; align-items: center; gap: 8px; padding: 8px 20px 0; font-size: 13px; color: #555; }
-    .my-score-row input { width: 90px; padding: 5px 10px; border: 1.5px solid var(--primary-dim); border-radius: 8px; font-size: 14px; text-align: center; }
+    .my-score-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 0 0; font-size: 13px; color: #555; flex-wrap: wrap;
+    }
+    .my-score-row > span:first-child { flex-shrink: 0; }
+    .my-score-row input {
+      flex: 1; min-width: 120px; box-sizing: border-box;
+      height: 40px; padding: 0 10px;
+      border: 1.5px solid #e0e0e0; border-radius: 8px;
+      font-size: 13px; color: #333; background: #fafafa;
+      outline: none; transition: border-color 0.2s;
+      font-family: inherit;
+    }
+    .my-score-row input:focus { border-color: var(--primary); background: #fff; }
+    .my-score-row .my-score-hint {
+      flex-basis: 100%; color: #aaa; font-size: 12px;
+    }
     .query-empty {
       text-align: center; padding: 40px 20px; color: #aaa; font-size: 14px;
     }
@@ -652,6 +669,7 @@
       background: #FFF8E1; padding: 4px 20px;
       font-size: 13px; color: #7a6200;
       border-bottom: 1px solid #FFE082; flex-shrink: 0;
+      text-align: center;
     }
     body.dark #dataSourceBar { background: #2a2410; color: #c9a800; border-color: #443800; }
 
@@ -1051,10 +1069,10 @@
       <div class="profile-row">
         <input class="profile-input" type="number" id="scoreInput"
           placeholder="高考分数（如 580）" min="0" max="750"
-          oninput="updateProfileBadge()" style="flex:1">
+          oninput="updateProfileBadge()" style="flex:none;width:182.4px;min-width:0">
         <input class="profile-input" type="number" id="rankInput"
           placeholder="省内位次（如 15000）" min="1"
-          oninput="updateProfileBadge()" style="flex:1">
+          oninput="updateProfileBadge()" style="flex:none;width:163.6px;min-width:0">
       </div>
       <div class="profile-row">
         <textarea class="profile-input" id="situationInput" rows="2"
@@ -1230,17 +1248,18 @@
         <select class="filter-select" id="qSubject"><option value="">选科/类别</option></select>
       </div>
       <div class="filter-row">
-        <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如：武汉大学）">
-        <select class="filter-select" id="qBatch" style="max-width:140px"><option value="">选择批次</option></select>
+        <select class="filter-select" id="qBatch"><option value="">选择批次</option></select>
+      </div>
+      <div class="filter-row">
+        <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如 武汉大学）">
         <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
       </div>
       <div class="my-score-row">
-        <span>我的分数：</span>
-        <input type="number" id="qMyScore" placeholder="如 580" min="0" max="900"
+        <input type="number" id="qMyScore" placeholder="高考分数（如 580）" min="0" max="900"
           oninput="syncMyScore()" title="填入后自动标注冲稳保">
-        <input type="number" id="qMyRank" placeholder="我的位次（如 15000）" min="1"
-          oninput="syncMyScore()" style="width:160px">
-        <span style="color:#aaa;font-size:12px">填入后自动标注冲稳保</span>
+        <input type="number" id="qMyRank" placeholder="省内位次（如 15000）" min="1"
+          oninput="syncMyScore()">
+        <span class="my-score-hint">填入后自动标注冲稳保</span>
       </div>
     </div>
     <!-- 查询结果 -->
