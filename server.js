@@ -1126,11 +1126,15 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ error: "数据库未加载" })); return;
     }
     try {
+      // 过滤乱码：只保留合法中文/字母/数字/常见标点，排除编码异常字符
+      const cleanText = arr => arr.filter(s =>
+        s && /^[一-鿿㐀-䶿\w\s\(\)\（\）\+\-\/·【】，、。A-Za-z0-9+]+$/.test(s)
+      );
       const tbl = dbSchema?.tableName || "major_scores";
-      const provinces = db.prepare(`SELECT DISTINCT province FROM "${tbl}" WHERE province IS NOT NULL ORDER BY province`).all().map(r => r.province);
+      const provinces = cleanText(db.prepare(`SELECT DISTINCT province FROM "${tbl}" WHERE province IS NOT NULL ORDER BY province`).all().map(r => r.province));
       const years     = db.prepare(`SELECT DISTINCT year FROM "${tbl}" WHERE year IS NOT NULL ORDER BY year DESC`).all().map(r => r.year);
-      const batches   = db.prepare(`SELECT DISTINCT batch FROM "${tbl}" WHERE batch IS NOT NULL ORDER BY batch`).all().map(r => r.batch);
-      const subjects  = db.prepare(`SELECT DISTINCT subject FROM "${tbl}" WHERE subject IS NOT NULL ORDER BY subject`).all().map(r => r.subject);
+      const batches   = cleanText(db.prepare(`SELECT DISTINCT batch FROM "${tbl}" WHERE batch IS NOT NULL ORDER BY batch`).all().map(r => r.batch));
+      const subjects  = cleanText(db.prepare(`SELECT DISTINCT subject FROM "${tbl}" WHERE subject IS NOT NULL ORDER BY subject`).all().map(r => r.subject));
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ provinces, years, batches, subjects }));
     } catch (e) {
