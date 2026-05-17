@@ -677,43 +677,111 @@
     #crisisBar .crisis-text { font-weight: 700; letter-spacing: 0.2px; }
     #crisisBar .crisis-hint { display: none; }
 
-    /* 危机热线 Modal */
+    /* ===== 心理求助全屏页面 ===== */
     #crisisOverlay {
-      display: none; position: fixed; inset: 0; z-index: 400;
-      background: rgba(0,0,0,0.5);
-      align-items: center; justify-content: center;
+      display: none; position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      width: 100%; height: 100%;
+      z-index: 400;
+      background: #FDFAF5;
+      flex-direction: column; overflow: hidden;
     }
     #crisisOverlay.open { display: flex; }
-    #crisisModal {
-      background: #fff; border-radius: 16px; padding: 24px 24px 20px;
-      max-width: 360px; width: 92%; box-shadow: 0 8px 40px rgba(0,0,0,0.22);
-      position: relative;
+
+    /* 顶部导航栏 */
+    .crisis-page-header {
+      display: flex; align-items: center; justify-content: center;
+      position: relative; flex-shrink: 0;
+      padding: 6px 16px 4px;
+      background: #FDFAF5;
     }
-    body.dark #crisisModal { background: #1e1e30; color: #e0e0e0; }
-    #crisisModal h3 {
-      margin: 0 0 4px; font-size: 17px; color: var(--warning);
-      display: flex; align-items: center; gap: 8px;
+    .crisis-back-btn {
+      position: absolute; left: 14px;
+      font-size: 26px; line-height: 1; color: #333;
+      background: none; border: none; cursor: pointer; padding: 2px 6px;
+      font-weight: 300;
     }
-    #crisisModal .crisis-modal-sub {
-      font-size: 12px; color: var(--text-light); margin-bottom: 16px;
+    .crisis-page-title { font-size: 16px; font-weight: 700; color: #1a2a3a; }
+
+    /* 内容区：不滚动，flex 撑满 */
+    #crisisPage {
+      flex: 1; overflow: hidden; min-height: 0;
+      display: flex; flex-direction: column;
     }
-    .crisis-hotline {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 12px 0; border-bottom: 1px solid var(--border);
+
+    /* 顶部插图：变长完整显示，不裁剪 */
+    .crisis-banner-img {
+      width: 100%; display: block; flex-shrink: 0;
+      max-height: 24vh; object-fit: contain;
+      background: #f5f0e8;
     }
-    .crisis-hotline:last-of-type { border-bottom: none; }
-    .crisis-hotline-name { font-size: 13px; color: var(--text); }
-    .crisis-hotline-num {
-      font-size: 16px; font-weight: 700; color: var(--warning);
-      text-decoration: none; letter-spacing: 0.5px;
+
+    /* 主体：space-evenly 自动分配间距，不滚动 */
+    .crisis-page-body {
+      flex: 1; min-height: 0;
+      display: flex; flex-direction: column;
+      justify-content: space-evenly;
+      padding: 0 12px;
     }
-    .crisis-hotline-num:hover { text-decoration: underline; }
-    #crisisModal .crisis-modal-close {
-      position: absolute; top: 14px; right: 16px;
-      font-size: 20px; color: #aaa; cursor: pointer;
-      background: none; border: none; line-height: 1;
+
+    /* 标题区 */
+    .crisis-main-title {
+      font-size: 30px; font-weight: 800;
+      color: #1a2a4a; text-align: center;
+      margin: 0; line-height: 1.2;
     }
-    #crisisModal .crisis-modal-close:hover { color: #555; }
+    .crisis-main-sub {
+      font-size: 16px; color: #999; text-align: center;
+      line-height: 1.5; margin: 0;
+    }
+
+    /* 热线卡片：目标 100px */
+    .crisis-card { border-radius: 14px; padding: 2px 14px 2px; }
+    .crisis-card-top {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 0;
+    }
+    .crisis-card-icon { font-size: 40px; flex-shrink: 0; line-height: 1; }
+    .crisis-card-name {
+      font-size: 20px; color: #333; font-weight: 700; line-height: 1.2;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    /* 电话号码：最醒目 */
+    .crisis-card-num {
+      font-size: 28px; font-weight: 800; line-height: 1.0;
+      color: #1a2a4a; letter-spacing: 1.5px;
+      text-align: center; margin: 0;
+      white-space: nowrap;
+    }
+    .crisis-dial-btn {
+      display: flex; align-items: center; justify-content: center;
+      gap: 6px; width: 100%;
+      background: #1B3A6B; color: #fff;
+      border-radius: 50px; padding: 1px 0;
+      font-size: 19px; font-weight: 600; line-height: 1.2;
+      text-decoration: none; transition: background 0.2s;
+    }
+    .crisis-dial-btn:hover { background: #254e8f; }
+    .crisis-dial-btn::before { content: '📞'; font-size: 14px; }
+
+    /* 温馨提示卡 */
+    .crisis-info-card {
+      background: #EEF5FF; border-radius: 12px;
+      padding: 5px 14px; display: flex; gap: 10px;
+      align-items: center;
+    }
+    .crisis-info-card .info-icon { font-size: 22px; flex-shrink: 0; }
+    .crisis-info-card p { font-size: 16px; color: #555; line-height: 1.5; margin: 0; }
+
+    /* 紧急底栏 */
+    .crisis-emergency-bar {
+      background: #C0392B; color: #fff; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; padding: 8px 16px; font-size: 12px;
+    }
+    .crisis-emergency-bar .emg-icon { font-size: 15px; flex-shrink: 0; }
+    .crisis-emergency-bar .emg-text { text-align: center; line-height: 1.4; }
+    .crisis-emergency-bar strong { font-size: 13px; }
 
     body { padding-bottom: 50px; }
   </style>
@@ -1865,18 +1933,18 @@
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
         document.getElementById('coffeeOverlay').classList.remove('open');
-        document.getElementById('crisisOverlay').classList.remove('open');
+        closeCrisisModal();
       }
     });
 
-    // ==================== A8: 心理危机热线 Modal ====================
+    // ==================== A8: 心理求助全屏页面 ====================
     function openCrisisModal() {
       document.getElementById('crisisOverlay').classList.add('open');
+      document.body.style.overflow = 'hidden';
     }
-    function closeCrisisModal(e) {
-      if (!e || e.target === document.getElementById('crisisOverlay') || e.currentTarget.classList.contains('crisis-modal-close')) {
-        document.getElementById('crisisOverlay').classList.remove('open');
-      }
+    function closeCrisisModal() {
+      document.getElementById('crisisOverlay').classList.remove('open');
+      document.body.style.overflow = '';
     }
   </script>
 
@@ -1886,23 +1954,71 @@
     <span class="crisis-text">压力大想找人聊聊？点这里</span>
   </div>
 
-  <!-- A8: 心理热线 Modal -->
-  <div id="crisisOverlay" onclick="closeCrisisModal(event)">
-    <div id="crisisModal">
-      <button class="crisis-modal-close" onclick="closeCrisisModal()" title="关闭">×</button>
-      <h3>💙 心理援助热线</h3>
-      <p class="crisis-modal-sub">如果你现在很难受，随时可以拨打下面的热线，有人会接听。</p>
-      <div class="crisis-hotline">
-        <span class="crisis-hotline-name">北京心理危机研究与干预中心</span>
-        <a class="crisis-hotline-num" href="tel:01082951332">010-82951332</a>
+  <!-- A8: 心理求助全屏页面 -->
+  <div id="crisisOverlay">
+    <!-- 顶部导航 -->
+    <div class="crisis-page-header">
+      <button class="crisis-back-btn" onclick="closeCrisisModal()">‹</button>
+      <span class="crisis-page-title">心理求助</span>
+    </div>
+
+    <!-- 滚动区 -->
+    <div id="crisisPage">
+      <!-- 顶部插图 -->
+      <img src="/static/crisis-banner.png" class="crisis-banner-img" alt="心理求助插图">
+
+      <!-- 主体 -->
+      <div class="crisis-page-body">
+        <h2 class="crisis-main-title">压力大，可以找人聊聊</h2>
+        <p class="crisis-main-sub">
+          高考不是终点，你也不是一个人。<br>
+          下面这些电话 24 小时有人接听，<br>
+          完全免费，不会记录你的信息。
+        </p>
+
+        <!-- 热线卡 1 -->
+        <div class="crisis-card" style="background:#FFF9ED;">
+          <div class="crisis-card-top">
+            <span class="crisis-card-icon">🏥</span>
+            <span class="crisis-card-name">北京心理危机研究与干预中心</span>
+          </div>
+          <div class="crisis-card-num">010-82951332</div>
+          <a class="crisis-dial-btn" href="tel:01082951332">一键拨打</a>
+        </div>
+
+        <!-- 热线卡 2 -->
+        <div class="crisis-card" style="background:#F0FAF2;">
+          <div class="crisis-card-top">
+            <span class="crisis-card-icon">🤝</span>
+            <span class="crisis-card-name">希望 24 热线</span>
+          </div>
+          <div class="crisis-card-num">400-161-9995</div>
+          <a class="crisis-dial-btn" href="tel:4001619995">一键拨打</a>
+        </div>
+
+        <!-- 热线卡 3 -->
+        <div class="crisis-card" style="background:#FFF4EE;">
+          <div class="crisis-card-top">
+            <span class="crisis-card-icon">🧡</span>
+            <span class="crisis-card-name">抑郁援助热线</span>
+          </div>
+          <div class="crisis-card-num">400-995-0008</div>
+          <a class="crisis-dial-btn" href="tel:4009950008">一键拨打</a>
+        </div>
+
+        <!-- 温馨提示 -->
+        <div class="crisis-info-card">
+          <span class="info-icon">💡</span>
+          <p>你现在的感受是真实的，说出来不是软弱。先稳住，我们一起面对。</p>
+        </div>
       </div>
-      <div class="crisis-hotline">
-        <span class="crisis-hotline-name">希望 24 热线</span>
-        <a class="crisis-hotline-num" href="tel:4001619995">400-161-9995</a>
-      </div>
-      <div class="crisis-hotline">
-        <span class="crisis-hotline-name">抑郁援助热线</span>
-        <a class="crisis-hotline-num" href="tel:4009950008">400-995-0008</a>
+    </div>
+
+    <!-- 紧急求助底栏 -->
+    <div class="crisis-emergency-bar">
+      <span class="emg-icon">⚠️</span>
+      <div class="emg-text">
+        如有紧急情况，立刻拨打：<strong>110 警察 &nbsp;·&nbsp; 120 急救</strong>
       </div>
     </div>
   </div>
