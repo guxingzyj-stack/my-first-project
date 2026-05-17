@@ -223,8 +223,8 @@
       background: rgba(255,255,255,0.8);
       border-radius: 16px; padding: 16px;
       margin-bottom: 12px;
-      min-height: 200px; max-height: 440px;
-      overflow-y: auto; backdrop-filter: blur(10px);
+      min-height: 120px;
+      backdrop-filter: blur(10px);
     }
     .message { margin-bottom: 14px; animation: fadeIn 0.2s ease; }
     @keyframes fadeIn {
@@ -320,26 +320,26 @@
     }
 
     /* 底部输入区 */
-    .input-area { padding: 8px 20px 28px; }
+    .input-area { padding: 1px 16px 1px; }
     .input-box {
-      background: #fff; border-radius: 20px;
-      padding: 10px 10px 10px 16px;
-      display: flex; align-items: flex-end; gap: 10px;
+      background: #fff; border-radius: 18px;
+      padding: 3px 4px 3px 12px;
+      display: flex; align-items: flex-end; gap: 6px;
       box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     .input-box textarea {
-      flex: 1; padding: 4px 0;
-      border: none; font-size: 15px; outline: none;
+      flex: 1; padding: 3px 0;
+      border: none; font-size: 14px; outline: none;
       background: transparent; resize: none;
-      line-height: 1.5; max-height: 120px; overflow-y: auto;
+      line-height: 1.5; max-height: 100px; overflow-y: auto;
       font-family: inherit;
     }
     .input-box textarea::placeholder { color: #999; }
     .send-btn {
-      width: 40px; height: 40px;
+      width: 32px; height: 32px;
       background: var(--gradient);
-      color: #fff; border: none; border-radius: 10px;
-      font-size: 17px; cursor: pointer; flex-shrink: 0;
+      color: #fff; border: none; border-radius: 8px;
+      font-size: 14px; cursor: pointer; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
       box-shadow: 0 4px 12px rgba(44,95,141,0.3);
       transition: opacity 0.2s;
@@ -506,9 +506,12 @@
 
     /* ===== 消息操作按钮（复制/重新生成）===== */
     .message.bot { position: relative; padding-bottom: 22px; }
+    /* per-message 操作区（仅保留 🔄，供旧消息重新生成）*/
+    .message.bot { display: flex; flex-direction: column; align-items: flex-start; }
     .msg-actions {
-      position: absolute; right: 0; bottom: 2px;
-      display: flex; gap: 4px; opacity: 0; transition: opacity 0.2s; pointer-events: none;
+      display: flex; gap: 4px; flex-wrap: wrap;
+      margin-top: 4px;
+      opacity: 0; transition: opacity 0.2s; pointer-events: none;
     }
     .message.bot:hover .msg-actions { opacity: 1; pointer-events: auto; }
     .msg-action-btn {
@@ -518,6 +521,30 @@
     }
     .msg-action-btn:hover { color: var(--primary); border-color: var(--primary-dim); }
     body.dark .msg-action-btn { background: #3d3d58; border-color: #555; color: #aaa; }
+
+    /* 常驻操作工具条（固定在滚动区外，免责声明上方）*/
+    #msgActionBar {
+      display: flex; gap: 4px; flex-wrap: nowrap;
+      padding: 6px 10px;
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+      min-height: 40px;
+      align-items: center;
+      background: var(--card);
+    }
+    #msgActionBar:empty { border-top: none; min-height: 0; padding: 0; }
+    #msgActionBar .msg-action-btn {
+      flex: 1; font-size: 11px; padding: 5px 4px;
+      border-radius: 8px; color: #555;
+      border-color: #ddd; text-align: center;
+      white-space: nowrap; overflow: hidden;
+    }
+    /* 纯 emoji 按钮（👍👎）：固定小宽度，不参与拉伸 */
+    #msgActionBar .msg-action-icon {
+      flex: 0 0 32px; font-size: 14px; padding: 5px 0;
+    }
+    #msgActionBar .msg-action-btn:hover { color: var(--primary); border-color: var(--primary); }
+    #msgActionBar .msg-action-wrong:hover { color: #C0392B !important; border-color: #e8a0a0 !important; }
 
     /* ===== 追问按钮 ===== */
     .followup-area { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 6px; }
@@ -532,13 +559,13 @@
     /* ===== 历史对话抽屉 ===== */
     .history-drawer {
       position: fixed; top: 0; left: -270px; width: 260px; height: 100vh;
-      background: #fff; z-index: 100; transition: left 0.28s ease;
+      background: #fff; z-index: 200; transition: left 0.28s ease;
       box-shadow: 4px 0 24px rgba(0,0,0,0.15);
       display: flex; flex-direction: column; overflow: hidden;
     }
     body.dark .history-drawer { background: #22223a; }
     .history-drawer.open { left: 0; }
-    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 99; }
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 199; }
     .drawer-overlay.open { display: block; }
     .drawer-header {
       display: flex; align-items: center; justify-content: space-between;
@@ -624,17 +651,27 @@
 
     /* ===== 请喝咖啡（A7: 内容流，非 fixed）===== */
     .coffee-bar {
-      text-align: center; padding: 8px 16px 12px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 14px; padding: 6px 16px 8px;
       font-size: 11px; color: #ccc; line-height: 1.8;
+      flex-shrink: 0;
     }
     .coffee-bar a {
-      color: #bbb; text-decoration: none; cursor: pointer;
-      transition: color 0.15s;
+      color: var(--primary); text-decoration: none; cursor: pointer;
+      transition: color 0.15s; font-weight: 600;
     }
     .coffee-bar a:hover { color: var(--primary); }
+    .coffee-clear-btn {
+      font-size: 11px; color: #bbb; cursor: pointer;
+      background: none; border: 1px solid #e0e0e0;
+      border-radius: 14px; padding: 2px 10px;
+      white-space: nowrap; transition: all 0.15s;
+    }
+    .coffee-clear-btn:hover { color: #e74c3c; border-color: #e74c3c; }
     body.dark .coffee-bar { color: #555; }
     body.dark .coffee-bar a { color: #555; }
     body.dark .coffee-bar a:hover { color: var(--primary); }
+    body.dark .coffee-clear-btn { color: #555; border-color: #444; }
 
     .coffee-overlay {
       display: none; position: fixed; inset: 0;
@@ -784,6 +821,133 @@
     .crisis-emergency-bar strong { font-size: 13px; }
 
     body { padding-bottom: 50px; }
+
+    /* ===== Phase B-1: View 切换 ===== */
+    #homeView.hidden { display: none; }
+
+    /* 聊天页全屏覆盖层 */
+    #chatPageView {
+      display: none; position: fixed;
+      top: 0; left: 0; right: 0; bottom: 30px;
+      z-index: 100;
+      background: var(--bg);
+      flex-direction: column;
+    }
+    #chatPageView.active { display: flex; }
+
+    /* 聊天页顶部导航 */
+    .chat-page-header {
+      display: flex; align-items: center;
+      padding: 5px 16px 4px;
+      background: var(--card);
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .chat-back-btn {
+      font-size: 28px; line-height: 1; color: #333;
+      background: none; border: none; cursor: pointer;
+      padding: 2px 12px 2px 0; font-weight: 300;
+    }
+    .chat-page-title-group {
+      flex: 1; display: flex; flex-direction: column; align-items: center;
+      margin-right: 40px;
+    }
+    .chat-page-title {
+      font-size: 15px; font-weight: 700;
+      color: var(--text); line-height: 1.3;
+    }
+    .chat-page-subtitle {
+      font-size: 9px; color: var(--text-light);
+      line-height: 1.3; text-align: center;
+    }
+    .chat-history-btn {
+      font-size: 18px; background: none; border: none;
+      cursor: pointer; padding: 2px;
+    }
+
+    /* 聊天页学生信息条（精简单行版）*/
+    .chat-profile-bar {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .cpb-avatar {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: var(--primary-light);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; flex-shrink: 0; overflow: hidden;
+    }
+    .cpb-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .cpb-name {
+      font-size: 14px; font-weight: 700; color: var(--text); white-space: nowrap;
+    }
+    .cpb-sep { color: #bbb; font-size: 14px; }
+    .cpb-val {
+      font-size: 14px; color: var(--text); font-weight: 700; white-space: nowrap;
+    }
+    .cpb-edit-btn {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 13px; color: var(--primary);
+      background: none; border: none; cursor: pointer;
+      padding: 0; white-space: nowrap;
+    }
+    .cpb-edit-btn:active { opacity: 0.7; }
+
+    /* AI 免责声明 */
+    .ai-disclaimer {
+      text-align: center; font-size: 11px;
+      color: var(--primary); padding: 4px 16px 0;
+      flex-shrink: 0; line-height: 1.5;
+    }
+
+    /* 快捷问题栏（2×2）*/
+    .shortcut-bar {
+      display: flex; flex-wrap: wrap; gap: 6px;
+      padding: 6px 16px 0; flex-shrink: 0;
+    }
+    .shortcut-btn {
+      width: calc(50% - 3px); font-size: 13px; line-height: 1.3;
+      background: #fff; border: 1px solid var(--border);
+      border-radius: 20px; padding: 7px 8px;
+      cursor: pointer; color: var(--text-light);
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .shortcut-btn:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+    .shortcut-btn:active { transform: scale(0.96); }
+
+    /* 聊天页内联编辑面板 */
+    #chatEditPanel {
+      background: #F8F9FA; border-bottom: 1px solid var(--border);
+      padding: 10px 16px 12px; flex-shrink: 0;
+    }
+    .chat-edit-row {
+      display: flex; gap: 8px; margin-bottom: 8px;
+    }
+    .chat-edit-done-btn {
+      width: 100%; background: var(--primary); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 8px 0; font-size: 14px; font-weight: 600;
+      cursor: pointer; margin-top: 2px;
+    }
+    .chat-edit-done-btn:active { opacity: 0.85; }
+
+    /* 院校查询页顶部导航（Phase B-1 最小化版，Phase C 完整重构）*/
+    #dataViewHeader {
+      display: none; align-items: center;
+      padding: 10px 16px 8px;
+      background: var(--card);
+      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+    }
+    #dataViewHeader.active { display: flex; }
+    .data-page-title {
+      flex: 1; font-size: 16px; font-weight: 700;
+      color: var(--text); text-align: center;
+      margin-right: 40px;
+    }
   </style>
 </head>
 <body>
@@ -798,6 +962,9 @@
     <div class="history-list" id="historyList"></div>
   </div>
   <div class="drawer-overlay" id="drawerOverlay" onclick="toggleDrawer()"></div>
+
+  <!-- ===== 首页 View ===== -->
+  <div id="homeView">
 
   <!-- Hero 区：img 做背景，文字层压在左上角空白处 -->
   <div id="heroSection">
@@ -906,16 +1073,21 @@
     ⚠️ 测试模式 · 反馈不计入统计
   </div>
 
+  <!-- 公益咖啡提示 -->
+  <div style="text-align:center; font-size:11px; color:var(--text); padding: 4px 16px 0;">
+    项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()" style="color:var(--primary);font-weight:600;cursor:pointer;text-decoration:none;">请站长喝杯咖啡 ☕</a>
+  </div>
+
   <!-- 功能导航卡（替代原 Tab，id 保留供 JS 使用）-->
   <div class="nav-cards">
-    <div class="nav-card active" id="tabChat" onclick="switchTab('chat')">
+    <div class="nav-card" id="tabChat" onclick="switchView('chat')">
       <span class="nav-card-icon">💬</span>
       <div class="nav-card-text">
         <div class="nav-card-title">AI 咨询</div>
         <div class="nav-card-desc">用大白话问，用大白话答</div>
       </div>
     </div>
-    <div class="nav-card" id="tabData" onclick="switchTab('data')">
+    <div class="nav-card" id="tabData" onclick="switchView('data')">
       <span class="nav-card-icon">🔍</span>
       <div class="nav-card-text">
         <div class="nav-card-title">院校查询</div>
@@ -938,39 +1110,72 @@
     </div>
   </div>
 
+  </div><!-- end homeView -->
+
+  <!-- ===== 聊天页 View ===== -->
+  <div id="chatPageView">
+    <!-- 顶部导航 -->
+    <div class="chat-page-header">
+      <button class="chat-back-btn" onclick="switchView('home')">‹</button>
+      <div class="chat-page-title-group">
+        <span class="chat-page-title">AI 咨询</span>
+        <span class="chat-page-subtitle">内容由AI生成，仅供参考，请结合官方信息与自身情况谨慎决策</span>
+      </div>
+      <button class="chat-history-btn" onclick="toggleDrawer()" title="历史记录">📋</button>
+    </div>
+    <!-- 学生信息条（精简单行版）-->
+    <div class="chat-profile-bar" id="chatProfileBar">
+      <div class="cpb-avatar">
+        <img src="/static/avatar-student.png" alt=""
+          onerror="this.style.display='none';this.parentNode.textContent='🧑‍🎓'">
+      </div>
+      <span class="cpb-name">同学</span>
+      <span class="cpb-sep">·</span>
+      <span class="cpb-val" id="chatSumProvince">—</span>
+      <span class="cpb-sep">·</span>
+      <span class="cpb-val" id="chatSumSubject">—</span>
+      <span class="cpb-sep">·</span>
+      <span class="cpb-val" id="chatSumScore">—</span>
+      <button class="cpb-edit-btn" onclick="toggleChatEdit()">编辑 ›</button>
+    </div>
+
+  <!-- 内联编辑面板（折叠态，点编辑展开）-->
+  <div id="chatEditPanel" style="display:none">
+    <div class="chat-edit-row">
+      <select class="profile-select" id="chatProvinceSelect"></select>
+      <select class="profile-select" id="chatSubjectSelect"></select>
+    </div>
+    <div class="chat-edit-row">
+      <input class="profile-input" type="number" id="chatScoreInput"
+        placeholder="高考分数（如 580）" min="0" max="750" style="flex:1">
+      <input class="profile-input" type="number" id="chatRankInput"
+        placeholder="省内位次（如 15000）" min="1" style="flex:1">
+    </div>
+    <button class="chat-edit-done-btn" onclick="saveChatProfile()">✅ 保存</button>
+  </div>
+
   <!-- 智能咨询面板 -->
   <div class="chat-panel" id="chatPanel">
   <!-- 主内容 -->
   <div class="main-content">
-
-    <!-- 功能卡片 -->
-    <div class="feature-list">
-      <div class="feature-card" onclick="askFeature('我的分数能报哪些学校？冲稳保怎么定？')">
-        <div class="feature-icon icon-blue">🏫</div>
-        <span class="feature-text">我能上哪些学校？</span>
-      </div>
-      <div class="feature-card" onclick="askFeature('这个专业以后好就业吗？前景怎么样？')">
-        <div class="feature-icon icon-purple">🧠</div>
-        <span class="feature-text">这个专业好就业吗？</span>
-      </div>
-      <div class="feature-card" onclick="askFeature('平行志愿怎么填才稳？冲稳保比例怎么设？')">
-        <div class="feature-icon icon-yellow">🚀</div>
-        <span class="feature-text">志愿怎么填才稳？</span>
-      </div>
-      <div class="feature-card" onclick="askFeature('我们省今年高考有哪些重要政策和注意事项？')">
-        <div class="feature-icon icon-green">🗺️</div>
-        <span class="feature-text">我省有哪些政策？</span>
-      </div>
-    </div>
-
-    <!-- 聊天区域 -->
-    <div id="clearBtnArea"></div>
     <div class="chat-area" id="chatArea"></div>
+  </div>
 
-    <!-- 请喝咖啡（A7: 挪入内容流底部，降低视觉权重）-->
-    <div class="coffee-bar">
-      项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()">请站长喝杯咖啡 ☕</a>
-    </div>
+  <!-- 最新回复操作栏（常驻固定，不随内容滚动）-->
+  <div id="msgActionBar"></div>
+
+  <!-- 请喝咖啡 + 清空对话 同排 -->
+  <div class="coffee-bar">
+    <span>项目纯公益运营，如愿支持可<a onclick="openCoffeeModal()">请站长喝杯咖啡 ☕</a></span>
+    <button class="coffee-clear-btn" onclick="clearChat()">🗑 清空对话</button>
+  </div>
+
+  <!-- 快捷问题栏（输入框正上方，2×2）-->
+  <div class="shortcut-bar">
+    <button class="shortcut-btn" onclick="askFeature('我的分数能报哪些学校？冲稳保怎么定？')">我能上哪些学校？</button>
+    <button class="shortcut-btn" onclick="askFeature('这个专业以后好就业吗？前景怎么样？')">这个专业好就业吗？</button>
+    <button class="shortcut-btn" onclick="askFeature('平行志愿怎么填才稳？冲稳保比例怎么设？')">志愿怎么填才稳？</button>
+    <button class="shortcut-btn" onclick="askFeature('我们省今年高考有哪些重要政策和注意事项？')">我省有哪些政策？</button>
   </div>
 
   <!-- 底部输入 -->
@@ -982,6 +1187,7 @@
     </div>
   </div>
   </div><!-- end chat-panel -->
+  </div><!-- end chatPageView -->
 
   <!-- 请喝咖啡 Modal -->
   <div class="coffee-overlay" id="coffeeOverlay" onclick="closeCoffeeModal(event)">
@@ -1000,6 +1206,12 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- 院校查询页最小导航（Phase C 完整重构）-->
+  <div id="dataViewHeader">
+    <button class="chat-back-btn" onclick="switchView('home')">‹</button>
+    <span class="data-page-title">院校查询</span>
   </div>
 
   <!-- 数据查询面板 -->
@@ -1036,7 +1248,6 @@
     const messageInput = document.getElementById('messageInput');
     const sendBtn      = document.getElementById('sendBtn');
     const statusBar    = document.getElementById('statusBar');
-    const clearBtnArea = document.getElementById('clearBtnArea');
 
     let chatHistory    = [];
     let isWaiting      = false;
@@ -1051,36 +1262,90 @@
       if (bar) bar.style.display = 'block';
     }
 
-    // ==================== Tab 切换 ====================
-    function switchTab(tab) {
-      const chatPanel   = document.getElementById('chatPanel');
-      const queryPanel  = document.getElementById('queryPanel');
-      const tabChat     = document.getElementById('tabChat');
-      const tabData     = document.getElementById('tabData');
-      const chatInputArea = document.getElementById('chatInputArea');
+    // ==================== View 切换（Phase B-1）====================
+    let currentView = 'home';
 
-      if (tab === 'chat') {
-        chatPanel.classList.remove('hidden');
-        queryPanel.classList.remove('active');
-        chatInputArea.style.display = '';
-        tabChat.classList.add('active');
-        tabData.classList.remove('active');
-        setTimeout(() => {
-          chatInputArea.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        }, 100);
-      } else {
-        chatPanel.classList.add('hidden');
+    function switchView(name) {
+      currentView = name;
+      const homeView       = document.getElementById('homeView');
+      const chatPageView   = document.getElementById('chatPageView');
+      const queryPanel     = document.getElementById('queryPanel');
+      const dataViewHeader = document.getElementById('dataViewHeader');
+
+      // 重置所有 view
+      homeView.classList.remove('hidden');
+      chatPageView.classList.remove('active');
+      queryPanel.classList.remove('active');
+      dataViewHeader.classList.remove('active');
+
+      if (name === 'home') {
+        // 回首页：清除 chat-active，恢复 nav-cards 2x2
+        document.body.classList.remove('chat-active');
+      } else if (name === 'chat') {
+        homeView.classList.add('hidden');
+        chatPageView.classList.add('active');
+        updateChatProfileBar();
+        requestAnimationFrame(() => { chatArea.scrollTop = chatArea.scrollHeight; });
+      } else if (name === 'data') {
+        homeView.classList.add('hidden');
         queryPanel.classList.add('active');
-        chatInputArea.style.display = 'none';
-        tabData.classList.add('active');
-        tabChat.classList.remove('active');
-        // 自动从考生信息面板同步分数和省份
+        dataViewHeader.classList.add('active');
+        // 自动从考生信息同步分数和省份
         const profileScore    = document.getElementById('scoreInput').value;
         const profileProvince = document.getElementById('provinceSelect').value;
-        if (profileScore)    document.getElementById('qMyScore').value   = profileScore;
-        if (profileProvince) document.getElementById('qProvince').value  = profileProvince;
+        if (profileScore)    document.getElementById('qMyScore').value  = profileScore;
+        if (profileProvince) document.getElementById('qProvince').value = profileProvince;
         loadQueryOptions();
       }
+    }
+
+    // 学生信息条同步（从 profileForm 实时读取，分列渲染）
+    function updateChatProfileBar() {
+      const p = getUserProfile();
+      document.getElementById('chatSumProvince').textContent = p.province || '—';
+      document.getElementById('chatSumSubject').textContent  = p.subject  || '—';
+      document.getElementById('chatSumScore').textContent    = p.score ? p.score + '分' : '—';
+    }
+
+    // ---- 聊天页内联编辑 ----
+    function toggleChatEdit() {
+      const panel = document.getElementById('chatEditPanel');
+      if (panel.style.display !== 'none') {
+        panel.style.display = 'none'; return;
+      }
+      // 从主表单复制选项和当前值
+      const mainProv = document.getElementById('provinceSelect');
+      const chatProv = document.getElementById('chatProvinceSelect');
+      chatProv.innerHTML = mainProv.innerHTML;
+      chatProv.value     = mainProv.value;
+
+      const mainSubj = document.getElementById('subjectSelect');
+      const chatSubj = document.getElementById('chatSubjectSelect');
+      chatSubj.innerHTML = mainSubj.innerHTML;
+      chatSubj.value     = mainSubj.value;
+
+      document.getElementById('chatScoreInput').value = document.getElementById('scoreInput').value;
+      document.getElementById('chatRankInput').value  = document.getElementById('rankInput').value;
+
+      panel.style.display = 'block';
+    }
+
+    function saveChatProfile() {
+      // 写回主表单
+      document.getElementById('provinceSelect').value = document.getElementById('chatProvinceSelect').value;
+      document.getElementById('subjectSelect').value  = document.getElementById('chatSubjectSelect').value;
+      document.getElementById('scoreInput').value     = document.getElementById('chatScoreInput').value;
+      document.getElementById('rankInput').value      = document.getElementById('chatRankInput').value;
+      // 同步首页 badge + 三列数据 + 聊天页信息条
+      updateProfileBadge();
+      updateChatProfileBar();
+      document.getElementById('chatEditPanel').style.display = 'none';
+    }
+
+    // switchTab 兼容层（供 askAboutSchool / jumpToSchoolQuery 等老引用使用）
+    function switchTab(tab) {
+      if (tab === 'chat') { switchView('chat'); return; }
+      if (tab === 'data') { switchView('data'); return; }
     }
 
     // ==================== 数据查询 ====================
@@ -1290,15 +1555,32 @@
     function askFeature(text) {
       const p = getUserProfile();
       if (!p.province && !p.subject && !p.score) {
-        toggleProfile();
-        if (!document.querySelector('.profile-warn')) {
-          const hint = document.querySelector('.profile-hint');
-          const warn = document.createElement('div');
-          warn.className = 'profile-warn';
-          warn.style.cssText = 'color:#e74c3c;font-size:12px;margin-top:6px;';
-          warn.textContent = '请先填写省份和分数，AI 才能给出针对你的分析';
-          hint.insertAdjacentElement('afterend', warn);
-          setTimeout(() => warn.remove(), 3000);
+        if (currentView === 'chat') {
+          // 聊天页：打开内联编辑面板，顶部显示提示
+          if (document.getElementById('chatEditPanel').style.display === 'none') {
+            toggleChatEdit();
+          }
+          const panel = document.getElementById('chatEditPanel');
+          if (!panel.querySelector('.chat-edit-warn')) {
+            const warn = document.createElement('div');
+            warn.className = 'chat-edit-warn';
+            warn.style.cssText = 'color:#e74c3c;font-size:12px;margin-bottom:8px;text-align:center;';
+            warn.textContent = '⚠️ 请先填写省份和分数，AI 才能给出针对你的分析';
+            panel.insertBefore(warn, panel.firstChild);
+            setTimeout(() => warn.remove(), 3000);
+          }
+        } else {
+          // 首页：展开 profileForm 并显示提示
+          toggleProfile();
+          if (!document.querySelector('.profile-warn')) {
+            const hint = document.querySelector('.profile-hint');
+            const warn = document.createElement('div');
+            warn.className = 'profile-warn';
+            warn.style.cssText = 'color:#e74c3c;font-size:12px;margin-top:6px;';
+            warn.textContent = '请先填写省份和分数，AI 才能给出针对你的分析';
+            hint.insertAdjacentElement('afterend', warn);
+            setTimeout(() => warn.remove(), 3000);
+          }
         }
         return;
       }
@@ -1334,19 +1616,15 @@
       saveCurrentChatToHistory();
       chatArea.innerHTML = '';
       chatHistory = [];
-      clearBtnArea.innerHTML = '';
       localStorage.removeItem('gaokao_chat');
     }
 
-    function showClearBtn() {
-      if (clearBtnArea.innerHTML) return;
-      clearBtnArea.innerHTML = '<div class="clear-btn" onclick="clearChat()">🗑 清空对话</div>';
-    }
+    function showClearBtn() { /* 清空按钮已常驻 coffee-bar，无需动态插入 */ }
 
     // ---- 核心发送逻辑 ----
     // opts: { noUserBubble: bool, existingBotEl: Element }
     async function sendMessage(opts = {}) {
-      document.body.classList.add('chat-active'); // 方案Y: 折叠导航卡为图标条
+      // chat-active 由 switchView 管理，sendMessage 不再负责
       const { noUserBubble = false, existingBotEl = null } = opts;
       const message = messageInput.value.trim();
       if (!message || isWaiting) return;
@@ -1523,31 +1801,7 @@
       bubble.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
       div.appendChild(bubble);
 
-      // 操作按钮区（悬停显示）
-      // 👍👎📋 三个反馈按钮在 SSE done 事件后由 appendFeedbackButtons() 注入
-      // 这里只放 🔄 重新生成（不依赖 messageId）
-      const actions = document.createElement('div');
-      actions.className = 'msg-actions';
-
-      // 🔄 重新生成
-      const regenBtn = document.createElement('button');
-      regenBtn.className = 'msg-action-btn';
-      regenBtn.textContent = '🔄';
-      regenBtn.title = '重新生成';
-      regenBtn.onclick = () => {
-        if (isWaiting) return;
-        const userMsg = div.dataset.userMsg;
-        if (!userMsg) return;
-        sendFeedback(div, 'regenerate', null, false); // 显式上报 regenerate
-        // 从历史中移除最后一条 assistant 消息
-        const lastIdx = chatHistory.map(m => m.role).lastIndexOf('assistant');
-        if (lastIdx >= 0) chatHistory.splice(lastIdx, 1);
-        messageInput.value = userMsg;
-        sendMessage({ noUserBubble: true, existingBotEl: div });
-      };
-      actions.appendChild(regenBtn);
-
-      div.appendChild(actions);
+      // 👍👎📋⚠️🔄 五个反馈按钮均由 appendFeedbackButtons() 注入常驻工具条 #msgActionBar
       chatArea.appendChild(div);
       chatArea.scrollTop = chatArea.scrollHeight;
       return div;
@@ -1699,22 +1953,25 @@
         .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     }
 
-    // 反馈按钮注入（在 SSE done 事件后调用，确保 messageId 已就位）
+    // 反馈按钮注入（SSE done 后调用）→ 填充常驻工具条 #msgActionBar
     function appendFeedbackButtons(botEl) {
-      const actions = botEl.querySelector('.msg-actions');
-      if (!actions) return;
+      const bar = document.getElementById('msgActionBar');
+      if (!bar) return;
+
+      // 清空旧按钮，绑定到新 botEl
+      bar.innerHTML = '';
 
       const thumbUpBtn = document.createElement('button');
-      thumbUpBtn.className = 'msg-action-btn';
+      thumbUpBtn.className = 'msg-action-btn msg-action-icon';
       thumbUpBtn.textContent = '👍';
       thumbUpBtn.title = '有帮助';
-      thumbUpBtn.onclick = () => sendFeedback(botEl, 'thumbs_up', thumbUpBtn);
+      thumbUpBtn.onclick = () => { sendFeedback(botEl, 'thumbs_up', thumbUpBtn); thumbUpBtn.textContent = '✅'; };
 
       const thumbDownBtn = document.createElement('button');
-      thumbDownBtn.className = 'msg-action-btn';
+      thumbDownBtn.className = 'msg-action-btn msg-action-icon';
       thumbDownBtn.textContent = '👎';
       thumbDownBtn.title = '没帮助';
-      thumbDownBtn.onclick = () => sendFeedback(botEl, 'thumbs_down', thumbDownBtn);
+      thumbDownBtn.onclick = () => { sendFeedback(botEl, 'thumbs_down', thumbDownBtn); thumbDownBtn.textContent = '👎'; };
 
       const copyBtn = document.createElement('button');
       copyBtn.className = 'msg-action-btn';
@@ -1728,17 +1985,28 @@
         }).catch(() => {});
       };
 
-      // 插到 🔄 之前，保持 👍👎📋🔄 顺序
-      const regenBtn = actions.querySelector('[title="重新生成"]');
-      if (regenBtn) {
-        actions.insertBefore(copyBtn,      regenBtn);
-        actions.insertBefore(thumbDownBtn, copyBtn);
-        actions.insertBefore(thumbUpBtn,   thumbDownBtn);
-      } else {
-        actions.appendChild(thumbUpBtn);
-        actions.appendChild(thumbDownBtn);
-        actions.appendChild(copyBtn);
-      }
+      const wrongBtn = document.createElement('button');
+      wrongBtn.className = 'msg-action-btn msg-action-wrong';
+      wrongBtn.textContent = '⚠️ 有误';
+      wrongBtn.title = '这个回答不对';
+      wrongBtn.onclick = () => { sendFeedback(botEl, 'wrong_answer', wrongBtn); wrongBtn.textContent = '⚠️ 已标记'; };
+
+      const regenBtn2 = document.createElement('button');
+      regenBtn2.className = 'msg-action-btn';
+      regenBtn2.textContent = '🔄 重新回答';
+      regenBtn2.title = '重新回答';
+      regenBtn2.onclick = () => {
+        if (isWaiting) return;
+        const userMsg = botEl.dataset.userMsg;
+        if (!userMsg) return;
+        sendFeedback(botEl, 'regenerate', null, false);
+        const lastIdx = chatHistory.map(m => m.role).lastIndexOf('assistant');
+        if (lastIdx >= 0) chatHistory.splice(lastIdx, 1);
+        messageInput.value = userMsg;
+        sendMessage({ noUserBubble: true, existingBotEl: botEl });
+      };
+
+      [thumbUpBtn, thumbDownBtn, copyBtn, wrongBtn, regenBtn2].forEach(b => bar.appendChild(b));
     }
 
     // 反馈上报（失败静默）
