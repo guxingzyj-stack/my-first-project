@@ -544,14 +544,19 @@ async function initDatabase() {
   const downloadUrl = process.env.DB_DOWNLOAD_URL;
 
   // 如果设置了下载地址，先检查 Volume 里是否已有完整文件（≥250MB）
+  // 设置 DB_FORCE_DOWNLOAD=1 可强制重新下载（用于替换更新后的数据库）
   if (downloadUrl) {
+    const forceDownload = process.env.DB_FORCE_DOWNLOAD === "1";
     let skipDownload = false;
-    if (fs.existsSync(SCORE_DB_PATH)) {
+    if (!forceDownload && fs.existsSync(SCORE_DB_PATH)) {
       const sizeMB = fs.statSync(SCORE_DB_PATH).size / (1024 * 1024);
       if (sizeMB >= 250) {
         console.log(`✅ 录取数据库已存在，跳过下载 (${Math.round(sizeMB)}MB)`);
         skipDownload = true;
       }
+    }
+    if (forceDownload) {
+      console.log("🔄 DB_FORCE_DOWNLOAD=1，强制重新下载数据库...");
     }
     if (!skipDownload) {
       try {
