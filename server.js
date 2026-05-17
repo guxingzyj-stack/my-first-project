@@ -514,21 +514,23 @@ function downloadDatabase(url) {
         }
         const total = parseInt(res.headers["content-length"] || "0");
         let received = 0;
-        const chunks = [];
+        // 流式写盘，避免大文件全量载入内存导致 OOM
+        const tmpPath = SCORE_DB_PATH + ".tmp";
+        const fileStream = fs.createWriteStream(tmpPath);
         res.on("data", (chunk) => {
-          chunks.push(chunk);
           received += chunk.length;
           if (total > 0 && received % (10 * 1024 * 1024) < chunk.length) {
             console.log(`   已下载 ${Math.round(received/1024/1024)}MB / ${Math.round(total/1024/1024)}MB`);
           }
         });
-        res.on("end", () => {
-          const buffer = Buffer.concat(chunks);
-          fs.writeFileSync(SCORE_DB_PATH, buffer);
-          console.log(`✅ 数据库下载完成 (${Math.round(buffer.length/1024/1024)}MB)`);
+        res.pipe(fileStream);
+        fileStream.on("finish", () => {
+          fs.renameSync(tmpPath, SCORE_DB_PATH);
+          console.log(`✅ 数据库下载完成 (${Math.round(received/1024/1024)}MB)`);
           resolve();
         });
-        res.on("error", reject);
+        fileStream.on("error", (e) => { fs.unlink(tmpPath, () => {}); reject(e); });
+        res.on("error", (e) => { fs.unlink(tmpPath, () => {}); reject(e); });
       });
       req.on("error", reject);
       req.on("timeout", () => { req.destroy(); reject(new Error("数据库下载超时")); });
