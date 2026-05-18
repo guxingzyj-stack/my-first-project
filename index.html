@@ -461,11 +461,25 @@
     .score-highlight { color: #e74c3c; font-weight: 700; }
     .rank-text { color: #888; font-size: 12px; }
     /* 冲稳保标签 */
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+    .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 12px; font-weight: 600; white-space: nowrap; }
     .tag-rush  { background: #fff3e0; color: #e65100; }
     .tag-match { background: #e8f5e9; color: #2e7d32; }
     .tag-safe  { background: #e3f2fd; color: #1565c0; }
     .tag-low   { background: #fce4ec; color: #c62828; }
+    /* 筛选区标签与折叠 */
+    .filter-section-label { font-size: 11px; color: #aaa; margin-bottom: 4px; }
+    .filter-action-row { justify-content: space-between; align-items: center; margin-top: 4px; margin-bottom: 0; }
+    .filter-toggle-btn {
+      background: none; border: none; color: var(--primary); font-size: 13px;
+      cursor: pointer; padding: 0; font-family: inherit; line-height: 40px;
+    }
+    .filter-toggle-btn:hover { text-decoration: underline; }
+    #filterExtra { display: none; }
+    #filterExtra[data-expanded="true"] { display: block; }
+    /* 手机端隐藏次要列 */
+    @media (max-width: 480px) {
+      .col-detail { display: none; }
+    }
     /* 我的分数输入 */
     .my-score-row {
       display: flex; align-items: center; gap: 8px;
@@ -1242,24 +1256,35 @@
   <div class="query-panel" id="queryPanel">
     <!-- 筛选条件 -->
     <div class="query-filters">
-      <div class="filter-row">
-        <select class="filter-select" id="qProvince"><option value="">选择省份</option></select>
-        <select class="filter-select" id="qYear"><option value="">选择年份</option></select>
-        <select class="filter-select" id="qSubject"><option value="">选科/类别</option></select>
-      </div>
-      <div class="filter-row">
-        <select class="filter-select" id="qBatch"><option value="">选择批次</option></select>
-      </div>
-      <div class="filter-row">
-        <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如 武汉大学）">
-        <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
-      </div>
+      <!-- 我的情况（前置） -->
+      <div class="filter-section-label">我的情况</div>
       <div class="my-score-row">
         <input type="number" id="qMyScore" placeholder="高考分数（如 580）" min="0" max="900"
           oninput="syncMyScore()" title="填入后自动标注冲稳保">
         <input type="number" id="qMyRank" placeholder="省内位次（如 15000）" min="1"
           oninput="syncMyScore()">
         <span class="my-score-hint">填入后自动标注冲稳保</span>
+      </div>
+      <!-- 查询条件 -->
+      <div class="filter-section-label" style="margin-top:10px">查询条件</div>
+      <div class="filter-row">
+        <select class="filter-select" id="qProvince"><option value="">选择省份</option></select>
+        <select class="filter-select" id="qYear"><option value="">选择年份</option></select>
+        <select class="filter-select" id="qSubject"><option value="">选科/类别</option></select>
+      </div>
+      <!-- 折叠区域：批次 + 院校输入 -->
+      <div id="filterExtra">
+        <div class="filter-row">
+          <select class="filter-select" id="qBatch"><option value="">选择批次</option></select>
+        </div>
+        <div class="filter-row">
+          <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如 武汉大学）">
+        </div>
+      </div>
+      <!-- 操作行：展开按钮 + 查询按钮 -->
+      <div class="filter-row filter-action-row">
+        <button class="filter-toggle-btn" id="filterToggle" onclick="toggleFilterExtra()">更多筛选 ▾</button>
+        <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
       </div>
     </div>
     <!-- 查询结果 -->
@@ -1467,6 +1492,14 @@
       return '<span class="tag tag-safe">保</span>';
     }
 
+    function toggleFilterExtra() {
+      const extra = document.getElementById('filterExtra');
+      const btn   = document.getElementById('filterToggle');
+      const expanded = extra.dataset.expanded === 'true';
+      extra.dataset.expanded = expanded ? 'false' : 'true';
+      btn.textContent = expanded ? '更多筛选 ▾' : '收起 ▴';
+    }
+
     function syncMyScore() {
       // 分数改变时重新渲染（如果当前有结果）
       const container = document.getElementById('queryResults');
@@ -1489,14 +1522,14 @@
       let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#2C5F8D">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
       const showTag = myScore > 0;
-      html += `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th></th></tr></thead><tbody>`;
+      html += `<thead><tr><th>院校</th><th class="col-detail">专业组</th><th class="col-detail">年份</th><th class="col-detail">科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th></th></tr></thead><tbody>`;
       for (const r of rows) {
         const tag = showTag ? calcTag(myScore, r.min_score, myRank, r.min_rank) : '';
         html += `<tr>
           <td style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
-          <td style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
-          <td style="white-space:nowrap">${r.year||''}</td>
-          <td style="white-space:nowrap">${escHtml(r.subject||'')}</td>
+          <td class="col-detail" style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
+          <td class="col-detail" style="white-space:nowrap">${r.year||''}</td>
+          <td class="col-detail" style="white-space:nowrap">${escHtml(r.subject||'')}</td>
           <td style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
           <td><span class="score-highlight">${r.min_score||'-'}</span></td>
           <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
