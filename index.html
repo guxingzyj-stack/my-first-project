@@ -1154,7 +1154,7 @@
     .school-card-major {
       font-size: 12px; color: var(--primary);
       margin-bottom: 4px;
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px;
     }
     body.dark .school-card-major { color: #7aaddf; }
     /* 按学校视图：专业列表 */
@@ -1624,6 +1624,14 @@
         fillSelect('qYear',     data.years);
         fillSelect('qSubject',  data.subjects);
         fillSelect('qBatch',    data.batches);
+        // 年份默认选最新（最大值）
+        const yearSel = document.getElementById('qYear');
+        const maxYear = data.years.map(Number).filter(Boolean).reduce((a,b)=>a>b?a:b, 0);
+        if (maxYear) yearSel.value = String(maxYear);
+        // 批次默认选本科一批
+        const batchSel = document.getElementById('qBatch');
+        if ([...batchSel.options].some(o => o.value === '本科一批')) batchSel.value = '本科一批';
+        updateFilterInfoBar();
         optionsLoaded = true;
       } catch (e) { console.error('加载筛选项失败', e); }
     }
@@ -1861,15 +1869,15 @@
       if (myRank && minRank) {
         const diff = minRank - myRank;
         if (diff < 0)     { cls = 'tag-lg-low';   label = '偏低'; }
-        else if (diff <= 2000) { cls = 'tag-lg-rush';  label = '冲一冲'; }
-        else if (diff <= 8000) { cls = 'tag-lg-match'; label = '稳一稳'; }
-        else               { cls = 'tag-lg-safe';  label = '保一保'; }
+        else if (diff <= 2000) { cls = 'tag-lg-rush';  label = '冲刺'; }
+        else if (diff <= 8000) { cls = 'tag-lg-match'; label = '稳妥'; }
+        else               { cls = 'tag-lg-safe';  label = '保底'; }
       } else if (myScore && minScore) {
         const diff = myScore - minScore;
         if (diff < 0)   { cls = 'tag-lg-low';   label = '偏低'; }
-        else if (diff <= 15) { cls = 'tag-lg-rush';  label = '冲一冲'; }
-        else if (diff <= 40) { cls = 'tag-lg-match'; label = '稳一稳'; }
-        else             { cls = 'tag-lg-safe';  label = '保一保'; }
+        else if (diff <= 15) { cls = 'tag-lg-rush';  label = '冲刺'; }
+        else if (diff <= 40) { cls = 'tag-lg-match'; label = '稳妥'; }
+        else             { cls = 'tag-lg-safe';  label = '保底'; }
       }
       return cls ? `<span class="tag-lg ${cls}">${label}</span>` : '';
     }
@@ -1976,7 +1984,7 @@
         const prov = document.getElementById('qProvince').value || '';
         const matchDesc = myScore
           ? `🤖 已根据 <b>${myScore}分</b>${prov?'·'+prov:''} 智能标注冲稳保，共 <b>${total.toLocaleString()}</b> 条数据`
-          : `🤖 填写分数后自动标注冲一冲 / 稳一稳 / 保一保`;
+          : `🤖 填写分数后自动标注冲刺 / 稳妥 / 保底`;
         html += `<div class="ai-match-bar">
           <div class="ai-match-left">${matchDesc}</div>
           <button class="ai-match-btn" onclick="doQuery(1)">重新计算</button>
