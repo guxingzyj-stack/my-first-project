@@ -1624,13 +1624,17 @@
         fillSelect('qYear',     data.years);
         fillSelect('qSubject',  data.subjects);
         fillSelect('qBatch',    data.batches);
-        // 年份默认选最新（最大值）
+        // 年份默认选最新（第一个，已按降序排列）
         const yearSel = document.getElementById('qYear');
-        const maxYear = data.years.map(Number).filter(Boolean).reduce((a,b)=>a>b?a:b, 0);
-        if (maxYear) yearSel.value = String(maxYear);
-        // 批次默认选本科一批
+        if (data.years && data.years.length) yearSel.value = String(data.years[0]);
+        // 批次按优先级默认选（本科批 > 本科一批）
         const batchSel = document.getElementById('qBatch');
-        if ([...batchSel.options].some(o => o.value === '本科一批')) batchSel.value = '本科一批';
+        const batchPrefs = ['本科批', '本科一批'];
+        for (const pref of batchPrefs) {
+          if ([...batchSel.options].some(o => o.value === pref)) {
+            batchSel.value = pref; break;
+          }
+        }
         updateFilterInfoBar();
         optionsLoaded = true;
       } catch (e) { console.error('加载筛选项失败', e); }
@@ -1915,7 +1919,7 @@
       const bgColor   = schoolLogoColor(name);
       const is985     = SCHOOLS_985.has(name);
       const is211     = SCHOOLS_211.has(name);
-      const tagLg     = showTag ? calcTagLg(myScore, r.min_score, myRank, r.min_rank) : '';
+      const tagLg     = showTag ? calcTagLg(myScore, r.min_score, myRank, r.min_rank) : '<span style="font-size:10px;color:#bbb;text-align:center;line-height:1.3">输入分数<br>看标签</span>';
 
       // 分类标签：科类 + 批次
       const tags = [];
@@ -2009,7 +2013,7 @@
           const is985   = SCHOOLS_985.has(schoolName);
           const is211   = SCHOOLS_211.has(schoolName);
           // 冲稳保：用该校最接近用户分数的那条记录判断
-          let bestTag = '';
+          let bestTag = '<span style="font-size:10px;color:#bbb;text-align:center;line-height:1.3">输入分数<br>看标签</span>';
           if (showTag) {
             const closest = list.reduce((a, b) => {
               const da = Math.abs((a.min_score||0) - myScore);
