@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "eval": "SYSTEM_API_URL=http://localhost:3000 node eval/eval_runner.js"
   },
   "dependencies": {
     "better-sqlite3": "^11.0.0"
