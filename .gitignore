@@ -4,5 +4,7 @@ package-lock.json
 *.db
 *.db-shm
 *.db-wal
+*.db.bak
+*.db.before_clean
 # 埋点数据库（含用户对话，绝不提交）
 data/
