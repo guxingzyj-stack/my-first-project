@@ -1173,7 +1173,12 @@ const server = http.createServer(async (req, res) => {
       if (year)     { conditions.push("year = ?"); params.push(year); }
       if (subject)  { conditions.push("subject = ?"); params.push(subject); }
       if (batch)    { conditions.push("batch = ?"); params.push(batch); }
-      if (major)    { conditions.push("major_group LIKE ?"); params.push(`%${major}%`); }
+      if (major) {
+        // 匹配：专业名等于搜索词，或以"搜索词（"开头（如"土木工程（中外合作）"）
+        // 不匹配：括号内含有该词的试验班（如"理科试验班（含土木工程）"）
+        conditions.push("(major_group LIKE ? OR major = ? OR major LIKE ? OR major LIKE ?)");
+        params.push(`%${major}%`, major, `${major}（%`, `${major}(%`);
+      }
 
       if (conditions.length === 0) {
         res.writeHead(400, { "Content-Type": "application/json" });
@@ -1183,7 +1188,7 @@ const server = http.createServer(async (req, res) => {
       const where = "WHERE " + conditions.join(" AND ");
       const total = db.prepare(`SELECT COUNT(*) as cnt FROM major_scores ${where}`).get(...params).cnt;
       const rows  = db.prepare(
-        `SELECT school, province, year, subject, batch, major_group, min_score, min_rank
+        `SELECT school, province, year, subject, batch, major_group, major, min_score, min_rank
          FROM major_scores ${where}
          ORDER BY year DESC, min_score DESC
          LIMIT ? OFFSET ?`

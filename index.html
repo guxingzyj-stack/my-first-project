@@ -1002,7 +1002,7 @@
     /* ===== 筛选区：卡片网格 ===== */
     .filter-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 8px;
       margin-bottom: 8px;
     }
@@ -1013,6 +1013,7 @@
       border: 1.5px solid #e0e0e0;
       border-radius: 10px;
       padding: 0 10px; height: 44px;
+      min-width: 0; overflow: hidden;
       transition: border-color 0.2s;
     }
     .filter-card-item:focus-within {
@@ -1027,6 +1028,66 @@
     }
     .filter-card-item select { -webkit-appearance: none; cursor: pointer; }
     .filter-action-row-new { display: flex; gap: 8px; }
+    /* 数字输入框右侧模拟下拉箭头 */
+    .filter-num-arrow {
+      font-size: 10px; color: #bbb; flex-shrink: 0;
+      pointer-events: none; padding-left: 2px; line-height: 1;
+    }
+    /* 查询按钮下方信息条 */
+    .filter-info-bar {
+      background: #fff8e1; border-radius: 8px; padding: 10px 14px;
+      font-size: 12px; color: #8a6d00; margin-top: 8px; line-height: 1.6;
+    }
+    body.dark .filter-info-bar { background: #2a2410; color: #c9a800; }
+    /* 专业自定义下拉 */
+    .major-autocomplete { position: relative; flex: 1; min-width: 0; overflow: visible; }
+    .major-autocomplete input { width: 100%; border: none; background: transparent;
+      font-size: 14px; color: var(--text); outline: none; min-width: 0; }
+    .major-dropdown {
+      display: none; position: absolute; top: calc(100% + 10px); left: -46px;
+      background: #fff; border: 1.5px solid #d0d8e8; border-radius: 12px;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.15); z-index: 9999;
+      max-height: 260px; overflow-y: auto; width: calc(100% + 46px); min-width: 260px;
+    }
+    body.dark .major-dropdown { background: #2d2d44; border-color: #555; }
+    .major-dropdown.open { display: block; }
+    .major-dropdown-item {
+      padding: 10px 14px; font-size: 13px; color: var(--text); cursor: pointer;
+      border-bottom: 1px solid #f0f0f0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    body.dark .major-dropdown-item { border-bottom-color: #3a3a50; }
+    .major-dropdown-item:last-child { border-bottom: none; }
+    .major-dropdown-item:hover, .major-dropdown-item.active { background: var(--primary-light); color: var(--primary); }
+    .major-dropdown-empty { padding: 12px 14px; font-size: 13px; color: #aaa; text-align: center; }
+    /* 结果区 Tab 栏 */
+    .result-tabs {
+      display: flex; border-bottom: 2px solid #eee; margin-bottom: 10px;
+    }
+    .result-tab {
+      padding: 8px 18px; font-size: 14px; font-weight: 600;
+      color: #aaa; background: none; border: none; cursor: pointer;
+      border-bottom: 3px solid transparent; margin-bottom: -2px;
+      transition: all 0.15s; font-family: inherit;
+    }
+    .result-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+    .result-tab:hover:not(.active) { color: #666; }
+    body.dark .result-tabs { border-color: #444; }
+    /* AI 匹配条 */
+    .ai-match-bar {
+      display: flex; align-items: center; justify-content: space-between;
+      background: #f0f4ff; border-radius: 8px; padding: 10px 14px;
+      margin-bottom: 10px; gap: 8px;
+    }
+    body.dark .ai-match-bar { background: #1a2040; }
+    .ai-match-left { font-size: 12px; color: #4a5568; flex: 1; line-height: 1.5; }
+    body.dark .ai-match-left { color: #9ab; }
+    .ai-match-btn {
+      font-size: 12px; color: var(--primary); background: none;
+      border: 1px solid var(--primary-dim); border-radius: 6px;
+      padding: 4px 10px; cursor: pointer; white-space: nowrap;
+      flex-shrink: 0; font-family: inherit;
+    }
+    .ai-match-btn:hover { background: var(--primary-light); }
 
     /* ===== 结果区：院校卡片 ===== */
     .school-cards { display: flex; flex-direction: column; gap: 10px; }
@@ -1063,19 +1124,21 @@
       font-size: 11px; color: #777;
       background: #f0f0f0; border-radius: 4px; padding: 1px 6px;
     }
-    .school-card-score { font-size: 13px; color: #555; }
+    .school-card-score { font-size: 13px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .school-card-score .score-val {
       font-weight: 700; color: #e74c3c; font-size: 15px;
     }
     .school-card-score .rank-val { color: #888; font-size: 12px; }
     .school-card-right {
       display: flex; flex-direction: column;
-      align-items: flex-end; gap: 6px; flex-shrink: 0;
+      align-items: center; justify-content: space-between;
+      gap: 6px; flex-shrink: 0; width: 60px;
     }
     /* 大号冲稳保标签 */
     .tag-lg {
       font-size: 14px; font-weight: 700;
-      padding: 4px 10px; border-radius: 8px; white-space: nowrap;
+      padding: 6px 12px; border-radius: 8px;
+      white-space: nowrap; text-align: center;
     }
     .tag-lg-rush  { background: #fff3e0; color: #e65100; }
     .tag-lg-match { background: #e8f5e9; color: #2e7d32; }
@@ -1088,6 +1151,25 @@
       padding: 3px 8px; cursor: pointer; white-space: nowrap;
     }
     .card-ask-ai-btn:hover { background: var(--primary-dim); }
+    .school-card-major {
+      font-size: 12px; color: var(--primary);
+      margin-bottom: 4px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    body.dark .school-card-major { color: #7aaddf; }
+    /* 按学校视图：专业列表 */
+    .school-majors-list { margin-top: 4px; }
+    .school-major-row {
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-size: 12px; padding: 2px 0;
+      border-bottom: 1px dashed #f0f0f0; gap: 6px;
+    }
+    .school-major-row:last-of-type { border-bottom: none; }
+    .school-major-name { color: var(--primary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .school-major-score { color: #888; white-space: nowrap; flex-shrink: 0; font-size: 11px; }
+    .school-major-more { font-size: 11px; color: #bbb; padding-top: 2px; }
+    body.dark .school-major-row { border-color: #444; }
+    body.dark .school-major-name { color: #7aaddf; }
     .query-footer {
       text-align: center; padding: 8px 0 2px;
       font-size: 11px; color: #bbb; line-height: 1.8;
@@ -1391,23 +1473,32 @@
         <div class="filter-card-item">
           <span class="filter-card-icon">📊</span>
           <input type="number" id="qMyScore" placeholder="我的分数" min="0" max="900" oninput="syncMyScore()">
+          <span class="filter-num-arrow">▾</span>
         </div>
         <div class="filter-card-item">
           <span class="filter-card-icon">📈</span>
           <input type="number" id="qMyRank" placeholder="我的位次" min="1" oninput="syncMyScore()">
+          <span class="filter-num-arrow">▾</span>
         </div>
         <div class="filter-card-item filter-grid-full">
           <span class="filter-card-icon">🏫</span>
           <input type="text" id="qSchool" placeholder="院校名称（如 武汉大学）">
         </div>
-        <div class="filter-card-item filter-grid-full">
+        <div class="filter-card-item filter-grid-full" style="overflow:visible">
           <span class="filter-card-icon">🎯</span>
-          <input type="text" id="qMajor" placeholder="专业筛选（如 计算机、临床医学）">
+          <div class="major-autocomplete">
+            <input type="text" id="qMajor" placeholder="专业筛选（如 计算机、临床医学）" autocomplete="off"
+              oninput="majorDropdownFilter()" onfocus="majorDropdownOpen()" onkeydown="majorDropdownKey(event)">
+            <div class="major-dropdown" id="majorDropdown"></div>
+          </div>
         </div>
       </div>
       <div class="filter-action-row-new">
         <button class="query-btn" id="queryBtn" onclick="doQuery(1)"
           style="flex:1;height:44px;border-radius:10px;font-size:15px">🔍 查询</button>
+      </div>
+      <div class="filter-info-bar" id="filterInfoBar">
+        📊 数据年份：全部年份&emsp;数据来源：请选择省份
       </div>
     </div>
     <!-- 查询结果 -->
@@ -1628,6 +1719,100 @@
       }
     }
 
+    // ---- 专业自定义下拉 ----
+    const MAJOR_LIST = ["土木工程","计算机科学与技术","临床医学","法学","英语","机械设计制造及其自动化","数学与应用数学","会计学","环境工程","电气工程及其自动化","化学工程与工艺","数据科学与大数据技术","应用化学","软件工程","金融学","国际经济与贸易","工科试验班","电子信息工程","药学","工商管理类","护理学","化学","食品科学与工程","工程管理","自动化","通信工程","人工智能","财务管理","生物技术","计算机类","工商管理","旅游管理","生物科学","物理学","材料科学与工程","电子信息类","生物工程","经济学","材料成型及控制工程","材料类","物流管理","汉语言文学","电子商务","市场营销","制药工程","信息管理与信息系统","物联网工程","建筑学","预防医学","安全工程","智能制造工程","医学检验技术","高分子材料与工程","中医学","金融工程","机械类","给排水科学与工程","车辆工程","康复治疗学","建筑环境与能源应用工程","工业设计","机器人工程","食品质量与安全","信息与计算科学","测控技术与仪器","经济学类","光电信息科学与工程","学前教育","机械电子工程","测绘工程","日语","数学类","应用心理学","中药学","环境科学与工程类","口腔医学","数字经济","应用物理学","大数据管理与应用","能源与动力工程","工程造价","人力资源管理","小学教育","商务英语","机械工程","统计学","城乡规划","环境科学","土木类","网络工程","园艺","应用统计学","行政管理","公共事业管理","动物科学","工业工程","生物科学类","医学影像学","网络与新媒体","新能源材料与器件","数字媒体技术","生物制药","新闻学","地理信息科学","智能建造","公共管理类","生物医学工程","风景园林","思想政治教育","教育技术学","翻译","地理科学","社会工作","园林","智能科学与技术","管理科学与工程类","针灸推拿学","中西医临床医学","网络空间安全","化工与制药类","化学类","道路桥梁与渡河工程","新闻传播学类","新能源科学与工程","经济统计学","材料化学","理科试验班","无机非金属材料工程","金属材料工程","医学影像技术","食品科学与工程类","历史学","过程装备与控制工程","汉语国际教育","广播电视编导","交通工程","麻醉学","交通运输","外国语言文学类","电子科学与技术","植物保护","城市地下空间工程","地质工程","电子信息科学与技术","金融科技","自动化类","物流工程","生态学","工程力学","资源勘查工程","水产养殖学","临床药学","金融学类","审计学","纺织工程","俄语","广告学","微电子科学与工程","建筑类","国际商务","信息安全","动物医学","金融数学","轻化工程","酒店管理","人文地理与城乡规划","水利水电工程","环境生态工程","遥感科学与技术","农学","投资学","药物制剂","卫生检验与检疫","基础医学","能源化学工程","储能科学与工程","土地资源管理","能源动力类","医学信息工程","油气储运工程","勘查技术与工程","农业资源与环境","助产学","文化产业管理","物理学类","保险学","冶金工程","采矿工程","环境科学与工程","智能医学工程","林学","儿科学","健康服务与管理","材料物理","心理学","法语","海洋科学","劳动与社会保障","会展经济与管理","船舶与海洋工程","服装设计与工程","建筑电气与智能化","药学类","戏剧影视文学","精神医学","复合材料与工程","运动康复","知识产权","食品营养与健康","应急技术与管理","农林经济管理","经济与贸易类","供应链管理","跨境电子商务","草业科学","广播电视学","理科试验班类","功能材料","地理科学类","应急管理","包装工程","税收学","矿物加工工程","植物生产类","集成电路设计与集成系统","中医骨伤科学","财政学类","水文与水资源工程","大数据与会计","德语","水利类","设施农业科学与工程","石油工程","智慧农业","眼视光医学","港口航道与海岸工程","汽车服务工程","社会学类","航空航天类","工科试验班类","生物信息学","农业水利工程","财政学","科学教育","焊接技术与工程","交通运输类","艺术管理","中药资源与开发","电气自动化技术","政治学与行政学","飞行器制造工程","木材科学与工程","护理","西班牙语","中药学类","社会学","经济管理试验班","消防工程","朝鲜语","教育学","法学类","传播学","特殊教育","旅游管理类","法医学","测绘类","茶学","中医康复学","经济与金融","资产评估","水土保持与荒漠化防治","新能源汽车工程","地质类","哲学","大气科学","智能采矿工程","中国语言文学类","大数据技术","信息工程","精算学","医学实验技术","应用化工技术","轮机工程","中药制药","医学试验班","自然地理与资源环境","电气类","智能感知工程","统计学类","核工程与核技术","计算机应用技术","地球物理学","烹饪与营养教育","机械制造及自动化","康复物理治疗","食品卫生与营养学","质量管理工程","机电一体化技术","种子科学与工程","地质学类","农业机械化及其自动化","智能电网信息工程","海洋技术","数据计算及应用","阿拉伯语","海洋资源与环境","非织造材料与工程","药事管理","轨道交通信号与控制","社会科学试验班","林学类","医学技术类","计算机网络技术","体育经济与管理","动植物检疫","管理科学","智能车辆工程","交通管理","新能源汽车技术","贸易经济","海洋工程类","动物医学类","中医养生学","现代物流管理","眼视光学","资源循环科学与工程","教育学类","环保设备工程","矿业类","地质学","刑事科学技术","宝石及材料工艺学","海洋渔业科学与技术","地下水科学与工程","虚拟现实技术","生物工程类","心理学类","艺术史论","印刷工程","化学生物学","生物育种科学","城市管理","电气工程与智能控制","地理空间信息工程","软件技术","秘书学","旅游管理与服务教育","动物药学","建筑工程技术","智慧交通","家具设计与工程","水生动物医学","安全科学与工程类","纺织类","国际政治","口腔医学技术","植物科学与技术","文物与博物馆学","海洋资源开发技术","葡萄与葡萄酒工程","电子信息工程技术","地球信息科学与技术","酒店管理与数字化运营","酿酒工程","房地产开发与管理","药物分析","侦查学","泰语","运动人体科学","飞行器动力工程","人文科学试验班","工科试验班）","生物医学工程类","小学数学教育","飞行器设计与工程","铁道工程","工业机器人技术","无人驾驶航空器系统工程","海洋油气工程","物联网应用技术","听力与言语康复学","广播电视工程","中草药栽培与鉴定","医疗保险","智慧水利","康复治疗技术","轻工类","水产类","土地整治工程","信息安全技术应用","养老服务管理","物流管理与工程类","编辑出版学","电子封装技术","农业智能装备工程","数据科学","网络安全与执法","应用气象学","航海技术","交通设备与控制工程","能源经济","野生动物与自然保护区管理","智能材料与结构","核工程类","中国少数民族语言文学","葡萄牙语","林产化工","化妆品技术与工程","历史学类","马克思主义理论","智能建造与智慧交通","精细化工","飞行器适航技术","商务经济学","非物质文化遗产保护","公共卫生与预防医学类","应用英语","能源与环境系统工程","应用生物科学","纳米材料与技术","治安学","资源环境科学","意大利语","大数据与财务管理","分析检验技术","能源化学","人工智能技术应用","智慧林业","档案学","水质科学与技术","外交学","中医儿科学","水族科学与技术","政治学类","国际事务与国际关系","法律事务","考古学","小学英语教育","弹药工程与爆炸技术","空间信息与数字技术","农村区域发展","大气科学类","动物生产类","民族学","数控技术","生物统计学","智能装备与系统","小学语文教育","化工安全工程","信息资源管理","化学工程与工业生物工程","碳储科学与工程","导航工程","合成生物学","工业工程类","船舶电子电气工程","动漫制作技术","森林保护","数字出版","智能交互设计","地球物理学类","工业智能","智能影像工程","密码科学与技术","汽车检测与维修技术","标准化工程","监狱学","生物医药数据科学","增材制造工程","粉体材料科学与工程","区块链工程","艺术设计学","小学科学教育","自然保护与环境生态类","放射医学","武器系统与工程","空中乘务","生物医学科学","森林工程","公安视听技术","现代通信技术","飞行器质量与可靠性","林业工程类","智慧牧业科学与工程","信用管理","智慧健康养老服务与管理","环境工程技术","草坪科学与工程","食品检验检测技术","资源与环境经济学","美术学","海洋科学类","文科试验班类","助产","文物保护技术","司法鉴定学","物业管理","康复作业治疗","戏剧学","电子商务类"];
+    let _majorDropIdx = -1;
+
+    function majorDropdownRender(list) {
+      const dd = document.getElementById('majorDropdown');
+      if (!list.length) {
+        dd.innerHTML = '<div class="major-dropdown-empty">无匹配专业</div>';
+      } else {
+        dd.innerHTML = list.map((m, i) =>
+          `<div class="major-dropdown-item" data-val="${m}" onmousedown="majorDropdownPick('${m.replace(/'/g,"\\'")}')">
+            ${m}
+          </div>`
+        ).join('');
+      }
+      _majorDropIdx = -1;
+    }
+
+    function majorDropdownOpen() {
+      const val = document.getElementById('qMajor').value.trim();
+      const filtered = val ? MAJOR_LIST.filter(m => m.includes(val)) : MAJOR_LIST;
+      majorDropdownRender(filtered);
+      document.getElementById('majorDropdown').classList.add('open');
+    }
+
+    function majorDropdownFilter() {
+      const val = document.getElementById('qMajor').value.trim();
+      const filtered = val ? MAJOR_LIST.filter(m => m.includes(val)) : MAJOR_LIST;
+      majorDropdownRender(filtered);
+      document.getElementById('majorDropdown').classList.add('open');
+    }
+
+    function majorDropdownPick(val) {
+      document.getElementById('qMajor').value = val;
+      document.getElementById('majorDropdown').classList.remove('open');
+    }
+
+    function majorDropdownKey(e) {
+      const dd = document.getElementById('majorDropdown');
+      const items = dd.querySelectorAll('.major-dropdown-item');
+      if (!items.length) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        _majorDropIdx = Math.min(_majorDropIdx + 1, items.length - 1);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        _majorDropIdx = Math.max(_majorDropIdx - 1, 0);
+      } else if (e.key === 'Enter' && _majorDropIdx >= 0) {
+        majorDropdownPick(items[_majorDropIdx].dataset.val);
+        return;
+      } else if (e.key === 'Escape') {
+        dd.classList.remove('open'); return;
+      } else { return; }
+      items.forEach((el, i) => el.classList.toggle('active', i === _majorDropIdx));
+      items[_majorDropIdx]?.scrollIntoView({block:'nearest'});
+    }
+
+    // 点击外部关闭
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.major-autocomplete')) {
+        document.getElementById('majorDropdown').classList.remove('open');
+      }
+    });
+
+    // ---- 筛选信息条联动 ----
+    function updateFilterInfoBar() {
+      const bar  = document.getElementById('filterInfoBar');
+      if (!bar) return;
+      const prov = document.getElementById('qProvince').value;
+      const year = document.getElementById('qYear').value;
+      const yearTxt  = year  ? `${year}年` : '全部年份';
+      const provTxt  = prov  ? `${prov}教育考试院` : '请选择省份';
+      const latestMark = year === '2025' ? '（最新）' : '';
+      bar.innerHTML = `📊 数据年份：${yearTxt}${latestMark}&emsp;数据来源：${provTxt}`;
+    }
+
+    // ---- 结果区 Tab 状态 ----
+    let _resultTab = 'major'; // 'school' | 'major'
+    function switchResultTab(tab) {
+      _resultTab = tab;
+      document.querySelectorAll('.result-tab').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tab);
+      });
+      if (tab === 'major') {
+        const container = document.getElementById('queryResults');
+        const cached = container.dataset.lastResult;
+        if (cached) renderQueryResults(JSON.parse(cached));
+      } else {
+        const container = document.getElementById('queryResults');
+        const cached = container.dataset.lastResult;
+        if (cached) renderQueryResults(JSON.parse(cached));
+      }
+    }
+
     // ---- 985/211 院校集合（用于显示标签）----
     const SCHOOLS_985 = new Set([
       '北京大学','清华大学','中国人民大学','北京航空航天大学','北京理工大学',
@@ -1716,6 +1901,53 @@
       sendMessage();
     }
 
+    function buildSchoolCard(r, myScore, myRank, showTag) {
+      const name      = r.school || '';
+      const firstChar = name.charAt(0) || '校';
+      const bgColor   = schoolLogoColor(name);
+      const is985     = SCHOOLS_985.has(name);
+      const is211     = SCHOOLS_211.has(name);
+      const tagLg     = showTag ? calcTagLg(myScore, r.min_score, myRank, r.min_rank) : '';
+
+      // 分类标签：科类 + 批次
+      const tags = [];
+      if (r.subject) tags.push(escHtml(r.subject));
+      if (r.batch)   tags.push(escHtml(r.batch));
+      const tagsHtml = tags.map(t => `<span class="school-card-tag">${t}</span>`).join('');
+
+      // 专业名：有具体名称才显示，"专业组XXXX"编号无意义不显示
+      const majorName = r.major || r.major_group || '';
+      const showMajor = majorName && !/^专业组/.test(majorName);
+      const majorHtml = showMajor
+        ? `<div class="school-card-major">📖 ${escHtml(majorName)}</div>`
+        : '';
+
+      const scoreHtml = `<span style="white-space:nowrap">${r.year||''}年&nbsp;最低分&nbsp;<span class="score-val">${r.min_score||'-'}</span>&nbsp;·&nbsp;位次&nbsp;<span class="rank-val">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></span>`;
+      const safeSchool = name.replace(/'/g,"\\'");
+      const safeProv   = (r.province||'').replace(/'/g,"\\'");
+      const safeMajor  = majorName.replace(/'/g,"\\'");
+      return `<div class="school-card">
+        <div class="school-logo-circle" style="background:${bgColor}">${firstChar}</div>
+        <div class="school-card-body">
+          <div class="school-card-title">
+            ${escHtml(name)}
+            ${is985 ? '<span class="school-badge-985">985</span>' : ''}
+            ${is211 ? '<span class="school-badge-211">211</span>' : ''}
+          </div>
+          <div class="school-card-tags">${tagsHtml}</div>
+          ${majorHtml}
+          <div class="school-card-score">${scoreHtml}</div>
+        </div>
+        <div class="school-card-right">
+          ${tagLg}
+          <button class="card-ask-ai-btn"
+            onclick="askAboutSchool('${safeSchool}',${r.year||0},'${safeProv}',${r.min_score||0},${r.min_rank||0},'${safeMajor}')">
+            问AI ›
+          </button>
+        </div>
+      </div>`;
+    }
+
     function renderQueryResults(data) {
       const { total, page, pageSize, rows } = data;
       const container = document.getElementById('queryResults');
@@ -1732,55 +1964,92 @@
       let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页`;
       if (myScore) html += `　我的分数：<b style="color:#2C5F8D">${myScore}</b>`;
       html += '</div>';
-      html += '<div class="school-cards">';
 
-      for (const r of rows) {
-        const name   = r.school || '';
-        const firstChar = name.charAt(0) || '校';
-        const bgColor   = schoolLogoColor(name);
-        const is985  = SCHOOLS_985.has(name);
-        const is211  = SCHOOLS_211.has(name);
-        const tagLg  = showTag ? calcTagLg(myScore, r.min_score, myRank, r.min_rank) : '';
+      // Tab 栏
+      html += `<div class="result-tabs">
+        <button class="result-tab ${_resultTab==='school'?'active':''}" data-tab="school" onclick="switchResultTab('school')">🏫 按学校</button>
+        <button class="result-tab ${_resultTab==='major'?'active':''}" data-tab="major" onclick="switchResultTab('major')">📖 按专业</button>
+      </div>`;
 
-        // 标签行：科类 + 批次 + 专业组（截短）
-        const tags = [];
-        if (r.subject) tags.push(escHtml(r.subject));
-        if (r.batch)   tags.push(escHtml(r.batch));
-        if (r.major_group) {
-          const mg = r.major_group.length > 12 ? r.major_group.slice(0,12)+'…' : r.major_group;
-          tags.push(escHtml(mg));
-        }
-        const tagsHtml = tags.map(t => `<span class="school-card-tag">${t}</span>`).join('');
-
-        const scoreHtml = `${r.year||''}年&nbsp;
-          最低分 <span class="score-val">${r.min_score||'-'}</span>
-          &nbsp;/&nbsp;
-          位次 <span class="rank-val">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span>`;
-
-        const safeSchool = name.replace(/'/g,"\\'");
-        const safeProv   = (r.province||'').replace(/'/g,"\\'");
-
-        html += `<div class="school-card">
-          <div class="school-logo-circle" style="background:${bgColor}">${firstChar}</div>
-          <div class="school-card-body">
-            <div class="school-card-title">
-              ${escHtml(name)}
-              ${is985 ? '<span class="school-badge-985">985</span>' : ''}
-              ${is211 ? '<span class="school-badge-211">211</span>' : ''}
-            </div>
-            <div class="school-card-tags">${tagsHtml}</div>
-            <div class="school-card-score">${scoreHtml}</div>
-          </div>
-          <div class="school-card-right">
-            ${tagLg}
-            <button class="card-ask-ai-btn"
-              onclick="askAboutSchool('${safeSchool}',${r.year||0},'${safeProv}',${r.min_score||0},${r.min_rank||0})">
-              问AI ›
-            </button>
-          </div>
+      // AI 匹配条（有分数时显示）
+      if (showTag) {
+        const prov = document.getElementById('qProvince').value || '';
+        const matchDesc = myScore
+          ? `🤖 已根据 <b>${myScore}分</b>${prov?'·'+prov:''} 智能标注冲稳保，共 <b>${total.toLocaleString()}</b> 条数据`
+          : `🤖 填写分数后自动标注冲一冲 / 稳一稳 / 保一保`;
+        html += `<div class="ai-match-bar">
+          <div class="ai-match-left">${matchDesc}</div>
+          <button class="ai-match-btn" onclick="doQuery(1)">重新计算</button>
         </div>`;
       }
-      html += '</div>';
+
+      if (_resultTab === 'school') {
+        // 按学校：同一学校合并成一张卡，列出所有专业
+        const grouped = {};
+        const order   = [];
+        for (const r of rows) {
+          const key = r.school || '未知院校';
+          if (!grouped[key]) { grouped[key] = []; order.push(key); }
+          grouped[key].push(r);
+        }
+        html += '<div class="school-cards">';
+        for (const schoolName of order) {
+          const list    = grouped[schoolName];
+          const rep     = list[0]; // 取第一条做院校基本信息
+          const bgColor = schoolLogoColor(schoolName);
+          const first   = schoolName.charAt(0) || '校';
+          const is985   = SCHOOLS_985.has(schoolName);
+          const is211   = SCHOOLS_211.has(schoolName);
+          // 冲稳保：用该校最接近用户分数的那条记录判断
+          let bestTag = '';
+          if (showTag) {
+            const closest = list.reduce((a, b) => {
+              const da = Math.abs((a.min_score||0) - myScore);
+              const db = Math.abs((b.min_score||0) - myScore);
+              return da <= db ? a : b;
+            });
+            bestTag = calcTagLg(myScore, closest.min_score, myRank, closest.min_rank);
+          }
+          // 取分数最高（最好录取）的那条做摘要
+          const best = list.reduce((a, b) => ((a.min_score||0) >= (b.min_score||0) ? a : b));
+          const scoreRange = `${rep.year||''}年&nbsp;最低分&nbsp;<b style="color:#e74c3c">${best.min_score||'-'}</b>${best.min_rank ? `&nbsp;·&nbsp;位次&nbsp;${best.min_rank.toLocaleString()}` : ''}`;
+          const safeName = schoolName.replace(/'/g,"\\'");
+          const safeProv = (rep.province||'').replace(/'/g,"\\'");
+          html += `<div class="school-card">
+            <div class="school-logo-circle" style="background:${bgColor}">${first}</div>
+            <div class="school-card-body" style="min-width:0">
+              <div class="school-card-title">
+                ${escHtml(schoolName)}
+                ${is985?'<span class="school-badge-985">985</span>':''}
+                ${is211?'<span class="school-badge-211">211</span>':''}
+              </div>
+              <div class="school-card-tags">
+                ${rep.subject?`<span class="school-card-tag">${escHtml(rep.subject)}</span>`:''}
+                ${rep.batch?`<span class="school-card-tag">${escHtml(rep.batch)}</span>`:''}
+                <span class="school-card-tag">${rep.year||''}年 · ${list.length}个专业</span>
+              </div>
+              <div class="school-card-score">${scoreRange}</div>
+            </div>
+            <div class="school-card-right">
+              ${bestTag}
+              <button class="card-ask-ai-btn"
+                onclick="askAboutSchool('${safeName}',${rep.year||0},'${safeProv}',${rep.min_score||0},${rep.min_rank||0},'')">
+                问AI ›
+              </button>
+            </div>
+          </div>`;
+        }
+        html += '</div>';
+      } else {
+        // 按专业：每条记录一张卡
+        html += '<div class="school-cards">';
+        for (const r of rows) {
+          html += buildSchoolCard(r, myScore, myRank, showTag);
+        }
+        html += '</div>';
+      }
+
+      // 卡片 HTML 已由上方 if/else 构建完毕
 
       // 分页
       if (totalPages > 1) {
@@ -1905,12 +2174,14 @@
     }
 
     // ---- 数据查询行"问AI"按钮 ----
-    function askAboutSchool(school, year, province, minScore, minRank) {
+    function askAboutSchool(school, year, province, minScore, minRank, major) {
       const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
-      let text = `${school} ${year}年在${province}录取最低分${minScore}`;
+      let text = `${school}`;
+      if (major) text += ` ${major}专业`;
+      text += ` ${year}年在${province}录取最低分${minScore}`;
       if (minRank) text += `，位次${minRank}`;
       if (myScore) text += `，我的分数是${myScore}`;
-      text += `，帮我分析值不值得报这所学校`;
+      text += `，帮我分析值不值得报`;
       switchTab('chat');
       messageInput.value = text;
       messageInput.style.height = 'auto';
@@ -2486,6 +2757,10 @@
       }
     } catch {}
     checkConfig();
+
+    // 筛选信息条：province/year 变化时实时更新
+    document.getElementById('qProvince').addEventListener('change', updateFilterInfoBar);
+    document.getElementById('qYear').addEventListener('change', updateFilterInfoBar);
 
     // 初始化深色模式
     if (localStorage.getItem('gaokao_dark') === '1') {
