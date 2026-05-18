@@ -521,7 +521,7 @@
     /* ===== 深色模式 ===== */
     body.dark .menu-btn { color: #bbb; }
     body.dark .profile-panel, body.dark .feature-card,
-    body.dark .query-filters, body.dark .result-table-wrap { background: var(--card); }
+    body.dark .query-filters { background: var(--card); }
     body.dark .profile-select, body.dark .profile-input,
     body.dark .filter-select, body.dark .filter-input { background: #3a3a55; color: var(--text); border-color: var(--border); }
     body.dark .chat-area { background: rgba(255,255,255,0.05); }
@@ -988,8 +988,118 @@
     .data-page-title {
       flex: 1; font-size: 16px; font-weight: 700;
       color: var(--text); text-align: center;
-      margin-right: 40px;
     }
+    /* 院校查询顶栏 AI 分析按钮 */
+    .data-ai-btn {
+      font-size: 12px; color: var(--primary);
+      background: var(--primary-light);
+      border: 1.5px solid var(--primary-dim);
+      border-radius: 8px; padding: 4px 10px;
+      cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    }
+    .data-ai-btn:active { opacity: 0.75; }
+
+    /* ===== 筛选区：卡片网格 ===== */
+    .filter-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .filter-grid-full { grid-column: 1 / -1; }
+    .filter-card-item {
+      display: flex; align-items: center; gap: 6px;
+      background: #f8f9fa;
+      border: 1.5px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 0 10px; height: 44px;
+      transition: border-color 0.2s;
+    }
+    .filter-card-item:focus-within {
+      border-color: var(--primary); background: #fff;
+    }
+    .filter-card-icon { font-size: 15px; flex-shrink: 0; }
+    .filter-card-item select,
+    .filter-card-item input {
+      flex: 1; border: none; background: transparent;
+      font-size: 13px; color: #333; outline: none;
+      font-family: inherit; min-width: 0;
+    }
+    .filter-card-item select { -webkit-appearance: none; cursor: pointer; }
+    .filter-action-row-new { display: flex; gap: 8px; }
+
+    /* ===== 结果区：院校卡片 ===== */
+    .school-cards { display: flex; flex-direction: column; gap: 10px; }
+    .school-card {
+      background: #fff; border-radius: 12px;
+      padding: 12px 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex; gap: 12px; align-items: flex-start;
+    }
+    .school-logo-circle {
+      width: 44px; height: 44px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; font-weight: 800; color: #fff;
+      flex-shrink: 0;
+    }
+    .school-card-body { flex: 1; min-width: 0; }
+    .school-card-title {
+      font-size: 15px; font-weight: 700; color: #222;
+      margin-bottom: 4px;
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+    }
+    .school-badge-985 {
+      font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 4px;
+      background: #fff3e0; color: #e65100;
+    }
+    .school-badge-211 {
+      font-size: 10px; font-weight: 600; padding: 1px 5px; border-radius: 4px;
+      background: #e3f2fd; color: #1565c0;
+    }
+    .school-card-tags {
+      display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 5px;
+    }
+    .school-card-tag {
+      font-size: 11px; color: #777;
+      background: #f0f0f0; border-radius: 4px; padding: 1px 6px;
+    }
+    .school-card-score { font-size: 13px; color: #555; }
+    .school-card-score .score-val {
+      font-weight: 700; color: #e74c3c; font-size: 15px;
+    }
+    .school-card-score .rank-val { color: #888; font-size: 12px; }
+    .school-card-right {
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 6px; flex-shrink: 0;
+    }
+    /* 大号冲稳保标签 */
+    .tag-lg {
+      font-size: 14px; font-weight: 700;
+      padding: 4px 10px; border-radius: 8px; white-space: nowrap;
+    }
+    .tag-lg-rush  { background: #fff3e0; color: #e65100; }
+    .tag-lg-match { background: #e8f5e9; color: #2e7d32; }
+    .tag-lg-safe  { background: #e3f2fd; color: #1565c0; }
+    .tag-lg-low   { background: #fce4ec; color: #c62828; }
+    .card-ask-ai-btn {
+      font-size: 11px; color: var(--primary);
+      background: var(--primary-light);
+      border: none; border-radius: 6px;
+      padding: 3px 8px; cursor: pointer; white-space: nowrap;
+    }
+    .card-ask-ai-btn:hover { background: var(--primary-dim); }
+    .query-footer {
+      text-align: center; padding: 8px 0 2px;
+      font-size: 11px; color: #bbb; line-height: 1.8;
+    }
+    /* 深色模式适配 */
+    body.dark .filter-card-item { background: #3a3a55; border-color: var(--border); }
+    body.dark .filter-card-item select,
+    body.dark .filter-card-item input { color: var(--text); }
+    body.dark .school-card { background: var(--card); }
+    body.dark .school-card-title { color: #e0e0e0; }
+    body.dark .school-card-tag { background: #444; color: #aaa; }
+    body.dark .school-card-score { color: #bbb; }
   </style>
 </head>
 <body>
@@ -1250,45 +1360,54 @@
     </div>
   </div>
 
-  <!-- 院校查询页最小导航（Phase C 完整重构）-->
+  <!-- 院校查询页导航 -->
   <div id="dataViewHeader">
     <button class="chat-back-btn" onclick="switchView('home')">‹</button>
-    <span class="data-page-title">院校查询</span>
+    <span class="data-page-title">院校数据查询</span>
+    <button class="data-ai-btn" onclick="aiAnalyzeResults()">✨ AI分析</button>
   </div>
 
   <!-- 数据查询面板 -->
   <div class="query-panel" id="queryPanel">
     <!-- 筛选条件 -->
     <div class="query-filters">
-      <!-- 我的情况（前置） -->
-      <div class="filter-section-label">我的情况</div>
-      <div class="my-score-row">
-        <input type="number" id="qMyScore" placeholder="高考分数（如 580）" min="0" max="900"
-          oninput="syncMyScore()" title="填入后自动标注冲稳保">
-        <input type="number" id="qMyRank" placeholder="省内位次（如 15000）" min="1"
-          oninput="syncMyScore()">
-        <span class="my-score-hint">填入后自动标注冲稳保</span>
-      </div>
-      <!-- 查询条件 -->
-      <div class="filter-section-label" style="margin-top:10px">查询条件</div>
-      <div class="filter-row">
-        <select class="filter-select" id="qProvince"><option value="">选择省份</option></select>
-        <select class="filter-select" id="qYear"><option value="">选择年份</option></select>
-        <select class="filter-select" id="qSubject"><option value="">选科/类别</option></select>
-      </div>
-      <!-- 折叠区域：批次 + 院校输入 -->
-      <div id="filterExtra">
-        <div class="filter-row">
-          <select class="filter-select" id="qBatch"><option value="">选择批次</option></select>
+      <div class="filter-grid">
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📍</span>
+          <select id="qProvince"><option value="">省份</option></select>
         </div>
-        <div class="filter-row">
-          <input class="filter-input" id="qSchool" type="text" placeholder="院校名称（如 武汉大学）">
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📅</span>
+          <select id="qYear"><option value="">年份</option></select>
+        </div>
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📋</span>
+          <select id="qBatch"><option value="">批次</option></select>
+        </div>
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📚</span>
+          <select id="qSubject"><option value="">科类</option></select>
+        </div>
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📊</span>
+          <input type="number" id="qMyScore" placeholder="我的分数" min="0" max="900" oninput="syncMyScore()">
+        </div>
+        <div class="filter-card-item">
+          <span class="filter-card-icon">📈</span>
+          <input type="number" id="qMyRank" placeholder="我的位次" min="1" oninput="syncMyScore()">
+        </div>
+        <div class="filter-card-item filter-grid-full">
+          <span class="filter-card-icon">🏫</span>
+          <input type="text" id="qSchool" placeholder="院校名称（如 武汉大学）">
+        </div>
+        <div class="filter-card-item filter-grid-full">
+          <span class="filter-card-icon">🎯</span>
+          <input type="text" id="qMajor" placeholder="专业筛选（如 计算机、临床医学）">
         </div>
       </div>
-      <!-- 操作行：展开按钮 + 查询按钮 -->
-      <div class="filter-row filter-action-row">
-        <button class="filter-toggle-btn" id="filterToggle" onclick="toggleFilterExtra()">更多筛选 ▾</button>
-        <button class="query-btn" id="queryBtn" onclick="doQuery(1)">查询</button>
+      <div class="filter-action-row-new">
+        <button class="query-btn" id="queryBtn" onclick="doQuery(1)"
+          style="flex:1;height:44px;border-radius:10px;font-size:15px">🔍 查询</button>
       </div>
     </div>
     <!-- 查询结果 -->
@@ -1438,6 +1557,7 @@
       const subject  = document.getElementById('qSubject').value;
       const school   = document.getElementById('qSchool').value.trim();
       const batch    = document.getElementById('qBatch').value;
+      const major    = document.getElementById('qMajor').value.trim();
 
       if (!province && !school) {
         document.getElementById('queryResults').innerHTML =
@@ -1454,15 +1574,20 @@
       if (subject)  params.set('subject', subject);
       if (school)   params.set('school', school);
       if (batch)    params.set('batch', batch);
+      if (major)    params.set('major', major);
       params.set('page', page);
 
-      // 骨架屏
-      const _skCells = Array(8).fill('<td><div class="skeleton-cell"></div></td>').join('');
-      const _skRows  = Array(8).fill(`<tr>${_skCells}</tr>`).join('');
+      // 骨架屏（卡片版）
+      const skCard = `<div class="school-card">
+        <div class="school-logo-circle" style="background:#e0e0e0"></div>
+        <div class="school-card-body">
+          <div class="skeleton-cell" style="width:60%;height:16px;margin-bottom:8px"></div>
+          <div class="skeleton-cell" style="width:80%;height:12px;margin-bottom:6px"></div>
+          <div class="skeleton-cell" style="width:50%;height:14px"></div>
+        </div>
+      </div>`;
       document.getElementById('queryResults').innerHTML =
-        `<div class="result-table-wrap"><table class="result-table">` +
-        `<thead><tr><th>院校</th><th>专业组</th><th>年份</th><th>科目</th><th>批次</th><th>最低分</th><th>最低位次</th><th></th></tr></thead>` +
-        `<tbody>${_skRows}</tbody></table></div>`;
+        `<div class="school-cards">${skCard.repeat(6)}</div>`;
 
       try {
         const res  = await fetch('/api/scores?' + params);
@@ -1474,7 +1599,7 @@
         document.getElementById('queryResults').innerHTML =
           `<div class="query-empty" style="color:#e74c3c">查询失败：${e.message}</div>`;
       } finally {
-        btn.disabled = false; btn.textContent = '查询';
+        btn.disabled = false; btn.textContent = '🔍 查询';
       }
     }
 
@@ -1496,52 +1621,166 @@
       return '<span class="tag tag-safe">保</span>';
     }
 
-    function toggleFilterExtra() {
-      const extra = document.getElementById('filterExtra');
-      const btn   = document.getElementById('filterToggle');
-      const expanded = extra.dataset.expanded === 'true';
-      extra.dataset.expanded = expanded ? 'false' : 'true';
-      btn.textContent = expanded ? '更多筛选 ▾' : '收起 ▴';
-    }
-
     function syncMyScore() {
-      // 分数改变时重新渲染（如果当前有结果）
       const container = document.getElementById('queryResults');
       if (container.dataset.lastResult) {
         renderQueryResults(JSON.parse(container.dataset.lastResult));
       }
     }
 
+    // ---- 985/211 院校集合（用于显示标签）----
+    const SCHOOLS_985 = new Set([
+      '北京大学','清华大学','中国人民大学','北京航空航天大学','北京理工大学',
+      '中国农业大学','北京师范大学','中央民族大学','南开大学','天津大学',
+      '大连理工大学','吉林大学','哈尔滨工业大学','复旦大学','同济大学',
+      '上海交通大学','华东师范大学','南京大学','东南大学','浙江大学',
+      '中国科学技术大学','厦门大学','山东大学','中国海洋大学','武汉大学',
+      '华中科技大学','湖南大学','中南大学','中山大学','华南理工大学',
+      '四川大学','重庆大学','电子科技大学','西安交通大学','西北工业大学',
+      '兰州大学','国防科技大学','东北大学','郑州大学','云南大学',
+      '新疆大学','西北农林科技大学'
+    ]);
+    const SCHOOLS_211 = new Set([
+      '北京交通大学','北京工业大学','北京科技大学','北京化工大学','北京邮电大学',
+      '北京林业大学','北京中医药大学','中国传媒大学','中央财经大学','对外经济贸易大学',
+      '外交学院','中国政法大学','华北电力大学','中国矿业大学（北京）','中国石油大学（北京）',
+      '中国地质大学（北京）','北京体育大学','中央音乐学院','河北工业大学',
+      '太原理工大学','内蒙古大学','辽宁大学','大连海事大学','延边大学',
+      '东北师范大学','哈尔滨工程大学','东北农业大学','东北林业大学',
+      '华东理工大学','东华大学','上海海洋大学','上海中医药大学','上海外国语大学',
+      '上海财经大学','上海大学','河海大学','江南大学','南京航空航天大学',
+      '南京理工大学','中国矿业大学','南京农业大学','中国药科大学','南京师范大学',
+      '苏州大学','浙江工业大学','安徽大学','合肥工业大学','福州大学',
+      '南昌大学','中国海洋大学','石油大学','中国石油大学（华东）','山东农业大学',
+      '中国石油大学','华中农业大学','华中师范大学','中南财经政法大学','武汉理工大学',
+      '武汉大学','湖南师范大学','暨南大学','华南师范大学','广西大学',
+      '海南大学','西南交通大学','西南财经大学','四川农业大学','成都理工大学',
+      '云南农业大学','西藏大学','西北大学','西安电子科技大学','长安大学',
+      '西北师范大学','宁夏大学','青海大学','石河子大学','贵州大学'
+    ]);
+
+    // ---- 院校 Logo 颜色（简单哈希取色）----
+    const _LOGO_COLORS = [
+      '#2C5F8D','#1a6b3d','#8b2252','#c0392b','#7d5a1e',
+      '#16537e','#2e7d32','#6a3093','#d35400','#1565c0'
+    ];
+    function schoolLogoColor(name) {
+      let h = 0;
+      for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
+      return _LOGO_COLORS[h % _LOGO_COLORS.length];
+    }
+
+    // ---- 大号冲稳保标签 HTML ----
+    function calcTagLg(myScore, minScore, myRank, minRank) {
+      let cls = '', label = '';
+      if (myRank && minRank) {
+        const diff = minRank - myRank;
+        if (diff < 0)     { cls = 'tag-lg-low';   label = '偏低'; }
+        else if (diff <= 2000) { cls = 'tag-lg-rush';  label = '冲一冲'; }
+        else if (diff <= 8000) { cls = 'tag-lg-match'; label = '稳一稳'; }
+        else               { cls = 'tag-lg-safe';  label = '保一保'; }
+      } else if (myScore && minScore) {
+        const diff = myScore - minScore;
+        if (diff < 0)   { cls = 'tag-lg-low';   label = '偏低'; }
+        else if (diff <= 15) { cls = 'tag-lg-rush';  label = '冲一冲'; }
+        else if (diff <= 40) { cls = 'tag-lg-match'; label = '稳一稳'; }
+        else             { cls = 'tag-lg-safe';  label = '保一保'; }
+      }
+      return cls ? `<span class="tag-lg ${cls}">${label}</span>` : '';
+    }
+
+    // ---- AI分析：把当前结果概要发给AI ----
+    function aiAnalyzeResults() {
+      const container = document.getElementById('queryResults');
+      const cached = container.dataset.lastResult;
+      if (!cached) { alert('请先查询后再使用 AI 分析'); return; }
+      const data = JSON.parse(cached);
+      if (!data.rows || data.rows.length === 0) { alert('暂无数据可分析'); return; }
+      const myScore = document.getElementById('qMyScore').value;
+      const myRank  = document.getElementById('qMyRank').value;
+      const province = document.getElementById('qProvince').value;
+      const rows = data.rows.slice(0, 10);
+      let summary = `以下是${province || '查询结果'}的录取数据（共${data.total}条，显示前${rows.length}条）：\n`;
+      rows.forEach((r, i) => {
+        summary += `${i+1}. ${r.school} ${r.year}年 ${r.subject||''} ${r.batch||''} 最低分${r.min_score||'-'}`;
+        if (r.min_rank) summary += ` 位次${r.min_rank}`;
+        summary += '\n';
+      });
+      if (myScore) summary += `\n我的分数：${myScore}分`;
+      if (myRank)  summary += `，位次：${myRank}`;
+      summary += '\n\n请帮我分析这些数据，哪些学校最值得关注？有哪些规律？';
+      switchView('chat');
+      messageInput.value = summary;
+      messageInput.style.height = 'auto';
+      messageInput.style.height = Math.min(messageInput.scrollHeight, 120) + 'px';
+      sendMessage();
+    }
+
     function renderQueryResults(data) {
       const { total, page, pageSize, rows } = data;
       const container = document.getElementById('queryResults');
-      container.dataset.lastResult = JSON.stringify(data); // 缓存供分数变化时重渲染
+      container.dataset.lastResult = JSON.stringify(data);
       if (!rows || rows.length === 0) {
         container.innerHTML = '<div class="query-empty">暂无匹配数据，换个条件试试</div>';
         return;
       }
-      const myScore = parseInt(document.getElementById('qMyScore').value) || 0;
-      const myRank  = parseInt(document.getElementById('qMyRank').value)  || 0;
+      const myScore    = parseInt(document.getElementById('qMyScore').value) || 0;
+      const myRank     = parseInt(document.getElementById('qMyRank').value)  || 0;
       const totalPages = Math.ceil(total / pageSize);
-      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#2C5F8D">'+myScore+'</b>' : ''}</div>`;
-      html += '<div class="result-table-wrap"><table class="result-table">';
-      const showTag = myScore > 0;
-      html += `<thead><tr><th>院校</th><th class="col-detail">专业组</th><th class="col-detail">年份</th><th class="col-detail">科目</th><th class="col-batch">批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th class="col-action"></th></tr></thead><tbody>`;
+      const showTag    = myScore > 0 || myRank > 0;
+
+      let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页`;
+      if (myScore) html += `　我的分数：<b style="color:#2C5F8D">${myScore}</b>`;
+      html += '</div>';
+      html += '<div class="school-cards">';
+
       for (const r of rows) {
-        const tag = showTag ? calcTag(myScore, r.min_score, myRank, r.min_rank) : '';
-        html += `<tr>
-          <td class="col-school" style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
-          <td class="col-detail" style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
-          <td class="col-detail" style="white-space:nowrap">${r.year||''}</td>
-          <td class="col-detail" style="white-space:nowrap">${escHtml(r.subject||'')}</td>
-          <td class="col-batch" style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
-          <td><span class="score-highlight">${r.min_score||'-'}</span></td>
-          <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
-          ${showTag ? `<td>${tag}</td>` : ''}
-          <td class="col-action"><button class="ask-ai-btn" onclick="askAboutSchool('${(r.school||'').replace(/'/g,"\\'")}',${r.year||0},'${(r.province||'').replace(/'/g,"\\'")}',${r.min_score||0},${r.min_rank||0})">问AI</button></td>
-        </tr>`;
+        const name   = r.school || '';
+        const firstChar = name.charAt(0) || '校';
+        const bgColor   = schoolLogoColor(name);
+        const is985  = SCHOOLS_985.has(name);
+        const is211  = SCHOOLS_211.has(name);
+        const tagLg  = showTag ? calcTagLg(myScore, r.min_score, myRank, r.min_rank) : '';
+
+        // 标签行：科类 + 批次 + 专业组（截短）
+        const tags = [];
+        if (r.subject) tags.push(escHtml(r.subject));
+        if (r.batch)   tags.push(escHtml(r.batch));
+        if (r.major_group) {
+          const mg = r.major_group.length > 12 ? r.major_group.slice(0,12)+'…' : r.major_group;
+          tags.push(escHtml(mg));
+        }
+        const tagsHtml = tags.map(t => `<span class="school-card-tag">${t}</span>`).join('');
+
+        const scoreHtml = `${r.year||''}年&nbsp;
+          最低分 <span class="score-val">${r.min_score||'-'}</span>
+          &nbsp;/&nbsp;
+          位次 <span class="rank-val">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span>`;
+
+        const safeSchool = name.replace(/'/g,"\\'");
+        const safeProv   = (r.province||'').replace(/'/g,"\\'");
+
+        html += `<div class="school-card">
+          <div class="school-logo-circle" style="background:${bgColor}">${firstChar}</div>
+          <div class="school-card-body">
+            <div class="school-card-title">
+              ${escHtml(name)}
+              ${is985 ? '<span class="school-badge-985">985</span>' : ''}
+              ${is211 ? '<span class="school-badge-211">211</span>' : ''}
+            </div>
+            <div class="school-card-tags">${tagsHtml}</div>
+            <div class="school-card-score">${scoreHtml}</div>
+          </div>
+          <div class="school-card-right">
+            ${tagLg}
+            <button class="card-ask-ai-btn"
+              onclick="askAboutSchool('${safeSchool}',${r.year||0},'${safeProv}',${r.min_score||0},${r.min_rank||0})">
+              问AI ›
+            </button>
+          </div>
+        </div>`;
       }
-      html += '</tbody></table></div>';
+      html += '</div>';
 
       // 分页
       if (totalPages > 1) {
@@ -1554,6 +1793,12 @@
         html += `<button class="page-btn" onclick="doQuery(${page+1})" ${page>=totalPages?'disabled':''}>下一页 ›</button>`;
         html += '</div>';
       }
+
+      // 底部提示
+      html += `<div class="query-footer">
+        数据来源：各省教育考试院官方公布 · 仅供参考<br>
+        录取以当年官方通知为准，重大决策请咨询老师或专业人员
+      </div>`;
 
       container.innerHTML = html;
     }

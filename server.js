@@ -1162,6 +1162,7 @@ const server = http.createServer(async (req, res) => {
       const year     = url.searchParams.get("year")     || "";
       const subject  = url.searchParams.get("subject")  || "";
       const batch    = url.searchParams.get("batch")    || "";
+      const major    = url.searchParams.get("major")    || "";
       const page     = parseInt(url.searchParams.get("page") || "1");
       const pageSize = 50;
 
@@ -1172,6 +1173,7 @@ const server = http.createServer(async (req, res) => {
       if (year)     { conditions.push("year = ?"); params.push(year); }
       if (subject)  { conditions.push("subject = ?"); params.push(subject); }
       if (batch)    { conditions.push("batch = ?"); params.push(batch); }
+      if (major)    { conditions.push("major_group LIKE ?"); params.push(`%${major}%`); }
 
       if (conditions.length === 0) {
         res.writeHead(400, { "Content-Type": "application/json" });
