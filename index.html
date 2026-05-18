@@ -441,11 +441,17 @@
       font-size: 12px; color: #888; margin-bottom: 8px; text-align: right;
     }
     .result-table-wrap {
-      background: #fff; border-radius: 12px; overflow: hidden;
+      background: #fff; border-radius: 12px; overflow-x: auto;
       box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      -webkit-overflow-scrolling: touch;
     }
     .result-table {
-      width: 100%; border-collapse: collapse; font-size: 13px;
+      width: 100%; min-width: 540px; border-collapse: collapse; font-size: 13px;
+    }
+    /* 院校列截断，不撑宽表格 */
+    .result-table td.col-school {
+      max-width: 90px; overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
     }
     .result-table th {
       background: var(--primary-light); color: var(--primary); padding: 10px 10px;
@@ -478,14 +484,8 @@
     #filterExtra[data-expanded="true"] { display: block; }
     /* 手机端隐藏次要列 */
     @media (max-width: 480px) {
+      /* 手机端只隐藏专业组和年份，其余列全部显示 */
       .col-detail { display: none; }
-      .col-batch  { display: none; }
-      .col-action { display: none; }
-      /* 院校名截断，避免长名称撑宽表格 */
-      .result-table td.col-school {
-        max-width: 80px; overflow: hidden;
-        text-overflow: ellipsis; white-space: nowrap;
-      }
     }
     /* 我的分数输入 */
     .my-score-row {
