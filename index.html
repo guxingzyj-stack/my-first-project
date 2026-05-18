@@ -479,6 +479,13 @@
     /* 手机端隐藏次要列 */
     @media (max-width: 480px) {
       .col-detail { display: none; }
+      .col-batch  { display: none; }
+      .col-action { display: none; }
+      /* 院校名截断，避免长名称撑宽表格 */
+      .result-table td.col-school {
+        max-width: 80px; overflow: hidden;
+        text-overflow: ellipsis; white-space: nowrap;
+      }
     }
     /* 我的分数输入 */
     .my-score-row {
@@ -1522,19 +1529,19 @@
       let html = `<div class="result-info">共 ${total.toLocaleString()} 条记录，第 ${page}/${totalPages} 页${myScore ? '　我的分数：<b style="color:#2C5F8D">'+myScore+'</b>' : ''}</div>`;
       html += '<div class="result-table-wrap"><table class="result-table">';
       const showTag = myScore > 0;
-      html += `<thead><tr><th>院校</th><th class="col-detail">专业组</th><th class="col-detail">年份</th><th class="col-detail">科目</th><th>批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th></th></tr></thead><tbody>`;
+      html += `<thead><tr><th>院校</th><th class="col-detail">专业组</th><th class="col-detail">年份</th><th class="col-detail">科目</th><th class="col-batch">批次</th><th>最低分</th><th>最低位次</th>${showTag ? '<th>冲稳保</th>' : ''}<th class="col-action"></th></tr></thead><tbody>`;
       for (const r of rows) {
         const tag = showTag ? calcTag(myScore, r.min_score, myRank, r.min_rank) : '';
         html += `<tr>
-          <td style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
+          <td class="col-school" style="font-weight:600;color:#333">${escHtml(r.school||'')}</td>
           <td class="col-detail" style="max-width:160px;color:#555">${escHtml(r.major_group||'')}</td>
           <td class="col-detail" style="white-space:nowrap">${r.year||''}</td>
           <td class="col-detail" style="white-space:nowrap">${escHtml(r.subject||'')}</td>
-          <td style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
+          <td class="col-batch" style="white-space:nowrap;color:#888;font-size:12px">${escHtml(r.batch||'')}</td>
           <td><span class="score-highlight">${r.min_score||'-'}</span></td>
           <td><span class="rank-text">${r.min_rank ? r.min_rank.toLocaleString() : '-'}</span></td>
           ${showTag ? `<td>${tag}</td>` : ''}
-          <td><button class="ask-ai-btn" onclick="askAboutSchool('${(r.school||'').replace(/'/g,"\\'")}',${r.year||0},'${(r.province||'').replace(/'/g,"\\'")}',${r.min_score||0},${r.min_rank||0})">问AI</button></td>
+          <td class="col-action"><button class="ask-ai-btn" onclick="askAboutSchool('${(r.school||'').replace(/'/g,"\\'")}',${r.year||0},'${(r.province||'').replace(/'/g,"\\'")}',${r.min_score||0},${r.min_rank||0})">问AI</button></td>
         </tr>`;
       }
       html += '</tbody></table></div>';
