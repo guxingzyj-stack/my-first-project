@@ -981,9 +981,9 @@ function extractAuthKey(req, url) {
   return url.searchParams.get("key") || "";
 }
 
-// CORS 来源白名单
+// CORS 来源白名单（自动去除空格和末尾斜杠，兼容常见配置错误）
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
-  .split(",").map(s => s.trim()).filter(Boolean);
+  .split(",").map(s => s.trim().replace(/\/+$/, "")).filter(Boolean);
 
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
