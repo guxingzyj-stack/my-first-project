@@ -950,6 +950,52 @@ function extractPreview(content, keyword) {
 
 // ==================== HTTP 服务器 ====================
 
+// 入库前脱敏：把 PII 替换为占位符（AI 收到的原文不变，仅落库版本被脱敏）
+function sanitizeForStorage(text) {
+  if (!text || typeof text !== "string") return text;
+  return text
+    // 18位身份证（最后一位可能是X）
+    .replace(/\b[1-9]\d{5}(?:19|20)\d{2}(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\d|3[01])\d{3}[\dXx]\b/g, "[身份证已脱敏]")
+    // 11位手机号
+    .replace(/\b1[3-9]\d{9}\b/g, "[手机号已脱敏]")
+    // 邮箱
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]+\b/g, "[邮箱已脱敏]")
+    // QQ号（5-11位纯数字，独立词，前后无字母数字）
+    .replace(/(?:(?<=\bQQ[:：\s]?)|(?<=\b扣扣[:：\s]?))\d{5,11}\b/gi, "[QQ已脱敏]");
+}
+
+// 通用限流器工厂：返回中间件函数，超限返回 true（已写回 429）
+function makeRateLimiter(map, windowMs, maxRequests) {
+  return function(req, res) {
+    const ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim()
+            || req.socket.remoteAddress || "unknown";
+    const now = Date.now();
+    const rec = map.get(ip) || { count: 0, start: now };
+    if (now - rec.start > windowMs) { rec.count = 0; rec.start = now; }
+    rec.count++;
+    map.set(ip, rec);
+    if (rec.count > maxRequests) {
+      const waitSec = Math.ceil((windowMs - (now - rec.start)) / 1000);
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "请求过于频繁，请稍后重试", waitSeconds: waitSec }));
+      return true;
+    }
+    return false;
+  };
+}
+const scoresRateLimitMap   = new Map();
+const feedbackRateLimitMap = new Map();
+const checkScoresRateLimit   = makeRateLimiter(scoresRateLimitMap,   60_000, 60);  // 60次/分钟
+const checkFeedbackRateLimit = makeRateLimiter(feedbackRateLimitMap, 60_000, 30);  // 30次/分钟
+
+// 全局未捕获异常兜底（防进程崩溃）
+process.on("uncaughtException", (err) => {
+  console.error("[FATAL] uncaughtException:", err);
+});
+process.on("unhandledRejection", (err) => {
+  console.error("[FATAL] unhandledRejection:", err);
+});
+
 // 读取请求 body，带最大长度限制（防 OOM 攻击）
 async function readBody(req, maxBytes = 100 * 1024) {
   let body = "";
@@ -1089,7 +1135,7 @@ const server = http.createServer(async (req, res) => {
             parseInt(userProfile.score) || null, isCrisis ? 1 : 0, reqStart);
           convDb.prepare(
             `INSERT INTO messages (id,conversation_id,role,content,created_at) VALUES (?,?,?,?,?)`
-          ).run(userMsgId, convId, "user", message, reqStart);
+          ).run(userMsgId, convId, "user", sanitizeForStorage(message), reqStart);
         }
       } catch(e) { console.error("埋点写入失败:", e.message); }
 
@@ -1167,7 +1213,7 @@ const server = http.createServer(async (req, res) => {
               `INSERT INTO messages
                (id,conversation_id,role,content,parent_message_id,latency_ms,is_crisis_response,created_at)
                VALUES (?,?,?,?,?,?,?,?)`
-            ).run(asstMsgId, convId, "assistant", replyText,
+            ).run(asstMsgId, convId, "assistant", sanitizeForStorage(replyText),
               userMsgId, Date.now() - reqStart, isCrisis ? 1 : 0, Date.now());
           }
         } catch(e) { console.error("埋点写入失败:", e.message); }
@@ -1184,7 +1230,7 @@ const server = http.createServer(async (req, res) => {
       }
       try {
         clearInterval(heartbeat);
-        res.write(`data: ${JSON.stringify({ type: "error", message: error.message || "服务器错误" })}\n\n`);
+        res.write(`data: ${JSON.stringify({ type: "error", message: "服务暂时不可用，请稍后重试" })}\n\n`);
         res.end();
       } catch {}
     }
@@ -1213,13 +1259,15 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ provinces, years, batches, subjects }));
     } catch (e) {
       res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: e.message }));
+      console.error("API错误:", e);
+      res.end(JSON.stringify({ error: "服务器内部错误，请稍后重试" }));
     }
     return;
   }
 
   // 查询录取数据
   if (pathname === "/api/scores" && req.method === "GET") {
+    if (checkScoresRateLimit(req, res)) return;
     if (!db) {
       res.writeHead(503, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "数据库未加载" })); return;
@@ -1266,13 +1314,15 @@ const server = http.createServer(async (req, res) => {
       res.end(JSON.stringify({ total, page, pageSize, rows }));
     } catch (e) {
       res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: e.message }));
+      console.error("API错误:", e);
+      res.end(JSON.stringify({ error: "服务器内部错误，请稍后重试" }));
     }
     return;
   }
 
   // 用户反馈接口
   if (pathname === "/api/feedback" && req.method === "POST") {
+    if (checkFeedbackRateLimit(req, res)) return;
     try {
       const body = await readBody(req, 10 * 1024); // 限制 10KB
       const { message_id, feedback_type, implicit = false, test_mode = false } = JSON.parse(body);
@@ -1352,7 +1402,8 @@ const server = http.createServer(async (req, res) => {
         avg_latency_ms: Math.round(avgRow.avg || 0), top_bad_questions }));
     } catch(e) {
       res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: e.message }));
+      console.error("API错误:", e);
+      res.end(JSON.stringify({ error: "服务器内部错误，请稍后重试" }));
     }
     return;
   }
@@ -1401,7 +1452,8 @@ const server = http.createServer(async (req, res) => {
       }
     } catch(e) {
       res.writeHead(500, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: e.message }));
+      console.error("API错误:", e);
+      res.end(JSON.stringify({ error: "服务器内部错误，请稍后重试" }));
     }
     return;
   }
