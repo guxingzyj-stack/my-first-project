@@ -75,11 +75,28 @@ td{padding:8px 12px;border-top:1px solid #eee;font-size:13px}
 <div id="app">加载中...</div>
 <script>
 (async function(){
-  const KEY = new URLSearchParams(window.location.search).get('key');
-  if (!KEY) { document.getElementById('app').innerHTML='<p style="color:red">缺少 key 参数，访问 /admin?key=YOUR_KEY</p>'; return; }
+  // 优先从 sessionStorage 读 key；没有则提示登录（不再走 URL）
+  let KEY = sessionStorage.getItem('adminKey');
+  // 兼容旧链接：若 URL 仍含 key，迁移到 sessionStorage 并清除 URL
+  const urlKey = new URLSearchParams(window.location.search).get('key');
+  if (urlKey) { KEY = urlKey; sessionStorage.setItem('adminKey', urlKey); history.replaceState(null,'','/admin'); }
+  if (!KEY) {
+    document.getElementById('app').innerHTML =
+      '<div style="background:#fff;padding:24px;border-radius:8px;max-width:360px;margin:40px auto;box-shadow:0 1px 3px rgba(0,0,0,.08)">'
+      +'<h3 style="margin:0 0 12px">请输入管理员密钥</h3>'
+      +'<input id=k type=password style="width:100%;padding:8px;border:1px solid #ddd;border-radius:4px;font-size:14px" placeholder="STATS_KEY">'
+      +'<button onclick="(function(){var v=document.getElementById(\\'k\\').value.trim();if(v){sessionStorage.setItem(\\'adminKey\\',v);location.reload()}})()" '
+      +'style="margin-top:10px;width:100%;padding:8px;background:#2563eb;color:#fff;border:none;border-radius:4px;cursor:pointer">登 录</button>'
+      +'</div>';
+    document.getElementById('k')?.addEventListener('keydown',e=>{if(e.key==='Enter')e.target.nextElementSibling.click()});
+    return;
+  }
   let d;
-  try { d = await fetch('/api/stats?key='+KEY).then(r=>r.json()); }
-  catch(e) { document.getElementById('app').innerHTML='<p style="color:red">加载失败: '+e.message+'</p>'; return; }
+  try {
+    const r = await fetch('/api/stats', { headers: { 'Authorization': 'Bearer ' + KEY }});
+    if (r.status === 401) { sessionStorage.removeItem('adminKey'); document.getElementById('app').innerHTML='<p style="color:red">密钥错误，<a href=/admin>重新登录</a></p>'; return; }
+    d = await r.json();
+  } catch(e) { document.getElementById('app').innerHTML='<p style="color:red">加载失败: '+e.message+'</p>'; return; }
   if (d.error) { document.getElementById('app').innerHTML='<p style="color:red">错误: '+d.error+'</p>'; return; }
 
   const esc = s => String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -933,6 +950,41 @@ function extractPreview(content, keyword) {
 
 // ==================== HTTP 服务器 ====================
 
+// 读取请求 body，带最大长度限制（防 OOM 攻击）
+async function readBody(req, maxBytes = 100 * 1024) {
+  let body = "";
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > maxBytes) {
+      const err = new Error("payload too large");
+      err.code = "PAYLOAD_TOO_LARGE";
+      throw err;
+    }
+    body += chunk;
+  }
+  return body;
+}
+
+// 安全的常数时间字符串比较（防时序攻击）
+function safeKeyEqual(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+// 从请求中提取鉴权 key（优先 Authorization 头，兼容 query 参数）
+function extractAuthKey(req, url) {
+  const authHeader = req.headers.authorization || "";
+  if (authHeader.startsWith("Bearer ")) return authHeader.substring(7).trim();
+  return url.searchParams.get("key") || "";
+}
+
+// CORS 来源白名单
+const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
+  .split(",").map(s => s.trim()).filter(Boolean);
+
 const MIME_TYPES = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
@@ -949,9 +1001,17 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, `http://${req.headers.host}`);
   const pathname = url.pathname;
 
-  res.setHeader("Access-Control-Allow-Origin", "*");
+  // CORS：同源请求和白名单域名才允许跨域调用
+  const origin = req.headers.origin || "";
+  if (ALLOWED_ORIGINS.length === 0) {
+    // 未配置白名单时，仅允许同源访问（origin为空表示同源）
+    if (origin) res.setHeader("Access-Control-Allow-Origin", "null");
+  } else if (ALLOWED_ORIGINS.includes(origin)) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Vary", "Origin");
+  }
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
   if (req.method === "OPTIONS") { res.writeHead(204); res.end(); return; }
 
@@ -964,6 +1024,11 @@ const server = http.createServer(async (req, res) => {
 
   // 聊天接口（SSE 流式输出）
   if (pathname === "/api/chat" && req.method === "POST") {
+    // Origin 校验：若配置了白名单，跨域 Origin 必须在白名单内（防被第三方站点滥用付费 LLM）
+    if (ALLOWED_ORIGINS.length > 0 && origin && !ALLOWED_ORIGINS.includes(origin)) {
+      res.writeHead(403, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Forbidden origin" })); return;
+    }
     // IP 限流（60秒窗口，同IP最多10次请求）
     const _ip = (req.headers["x-forwarded-for"] || "").split(",")[0].trim() || req.socket.remoteAddress || "unknown";
     const _now = Date.now();
@@ -979,8 +1044,7 @@ const server = http.createServer(async (req, res) => {
     }
     let heartbeat = null;
     try {
-      let body = "";
-      for await (const chunk of req) body += chunk;
+      const body = await readBody(req, 100 * 1024); // 限制 100KB
       const { message, history = [], userProfile = {} } = JSON.parse(body);
 
       if (!message) {
@@ -1114,6 +1178,10 @@ const server = http.createServer(async (req, res) => {
       res.end();
     } catch (error) {
       console.error("聊天错误:", error);
+      if (error.code === "PAYLOAD_TOO_LARGE") {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "请求内容过大" })); return;
+      }
       try {
         clearInterval(heartbeat);
         res.write(`data: ${JSON.stringify({ type: "error", message: error.message || "服务器错误" })}\n\n`);
@@ -1206,8 +1274,7 @@ const server = http.createServer(async (req, res) => {
   // 用户反馈接口
   if (pathname === "/api/feedback" && req.method === "POST") {
     try {
-      let body = "";
-      for await (const chunk of req) body += chunk;
+      const body = await readBody(req, 10 * 1024); // 限制 10KB
       const { message_id, feedback_type, implicit = false, test_mode = false } = JSON.parse(body);
       if (!message_id || !feedback_type) {
         res.writeHead(400, { "Content-Type": "application/json" });
@@ -1223,6 +1290,10 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
     } catch(e) {
+      if (e.code === "PAYLOAD_TOO_LARGE") {
+        res.writeHead(413, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ error: "请求内容过大" })); return;
+      }
       res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "server error" }));
     }
@@ -1231,8 +1302,8 @@ const server = http.createServer(async (req, res) => {
 
   // 简易运营看板（需 STATS_KEY 鉴权）
   if (pathname === "/api/stats" && req.method === "GET") {
-    const key = url.searchParams.get("key") || "";
-    if (!STATS_KEY || key !== STATS_KEY) {
+    const key = extractAuthKey(req, url);
+    if (!STATS_KEY || !safeKeyEqual(key, STATS_KEY)) {
       res.writeHead(401, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Unauthorized" })); return;
     }
@@ -1286,13 +1357,8 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 运营看板 HTML 页面
+  // 运营看板 HTML 页面（公开页面：先发登录表单，由前端用密码请求接口）
   if (pathname === "/admin" && req.method === "GET") {
-    const key = url.searchParams.get("key") || "";
-    if (!STATS_KEY || key !== STATS_KEY) {
-      res.writeHead(401, { "Content-Type": "text/plain; charset=utf-8" });
-      res.end("Unauthorized"); return;
-    }
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
     res.end(ADMIN_HTML);
     return;
@@ -1300,8 +1366,8 @@ const server = http.createServer(async (req, res) => {
 
   // 会话/消息检视接口（运营用）
   if (pathname === "/api/inspect" && req.method === "GET") {
-    const key = url.searchParams.get("key") || "";
-    if (!STATS_KEY || key !== STATS_KEY) {
+    const key = extractAuthKey(req, url);
+    if (!STATS_KEY || !safeKeyEqual(key, STATS_KEY)) {
       res.writeHead(401, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Unauthorized" })); return;
     }
